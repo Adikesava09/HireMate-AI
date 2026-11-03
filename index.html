@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HireMate AI</title>
+<style>
+:root {
+  --primary: #6254e8;
+  --primary-dark: #493bc7;
+  --bg: #f5f6fc;
+  --card: #ffffff;
+  --text: #20233a;
+  --muted: #72758b;
+  --border: #e5e7f0;
+  --green: #138a54;
+  --red: #cf3f52;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+
+.btn {
+  border: 0;
+  border-radius: 9px;
+  padding: 11px 16px;
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+}
+.btn:hover { background: var(--primary-dark); }
+.btn.secondary {
+  background: #eeedff;
+  color: var(--primary);
+}
+.btn.danger { background: #ffe8ec; color: var(--red); }
+.btn.outline {
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: white;
+}
+input, textarea, select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 12px;
+  margin-top: 6px;
+  background: white;
+  color: var(--text);
+}
+textarea { resize: vertical; min-height: 90px; }
+label { display: block; font-size: 14px; font-weight: 600; margin-top: 14px; }
+form button { margin-top: 18px; }
+h1 { font-size: 27px; margin: 0 0 8px; }
+h2 { font-size: 19px; margin-top: 0; }
+h3 { font-size: 16px; }
+p { line-height: 1.5; }
+
+.auth-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  padding: 30px;
+  border-radius: 18px;
+  box-shadow: 0 12px 45px #20233a12;
+}
+.brand { color: var(--primary); font-weight: 800; font-size: 24px; }
+.auth-card .btn { width: 100%; }
+.message { margin-top: 12px; font-size: 14px; color: var(--red); }
+.success { color: var(--green); }
+
+.layout { min-height: 100vh; display: flex; }
+.sidebar {
+  width: 245px;
+  background: white;
+  border-right: 1px solid var(--border);
+  padding: 22px 15px;
+  flex-shrink: 0;
+}
+.logo { padding: 0 12px 25px; }
+.nav-button {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  padding: 12px;
+  margin: 3px 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+}
+.nav-button.active, .nav-button:hover {
+  background: #efedff;
+  color: var(--primary);
+}
+.sidebar-bottom { margin-top: 25px; border-top: 1px solid var(--border); padding-top: 15px; }
+.main { min-width: 0; flex: 1; padding: 26px; }
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+}
+.page { max-width: 1150px; margin: auto; }
+.subtitle { color: var(--muted); margin-top: 5px; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.card {
+  background: var(--card);
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  min-width: 0;
+  margin-bottom: 18px;
+}
+.stat { font-size: 30px; font-weight: 800; margin: 12px 0; }
+.stat-label { color: var(--muted); font-size: 13px; }
+.progress {
+  width: 100%;
+  height: 9px;
+  background: #ececf4;
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+.progress div {
+  height: 100%;
+  width: 0;
+  background: var(--primary);
+  transition: width .3s;
+}
+.pills { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0; }
+.pill {
+  display: inline-block;
+  border-radius: 20px;
+  background: #eeedff;
+  color: #5143c9;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.pill.green { background: #e1f7eb; color: #087843; }
+.pill.red { background: #ffe9ed; color: #b92b43; }
+.result-box {
+  background: #f8f8ff;
+  border-radius: 10px;
+  padding: 15px;
+  margin-top: 14px;
+  overflow-wrap: anywhere;
+}
+.list { padding-left: 20px; line-height: 1.8; }
+.job-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 17px;
+  margin: 12px 0;
+  background: white;
+}
+.job-card p { color: var(--muted); font-size: 14px; }
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.row > * { min-width: 0; }
+.row .grow { flex: 1; }
+.preview {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 25px;
+  overflow-wrap: anywhere;
+}
+.preview h2 { color: var(--primary); margin-bottom: 5px; }
+.preview h3 {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+  margin-top: 22px;
+}
+.tracker-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin: 10px 0;
+}
+.footer-note {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 15px;
+}
+.menu-toggle { display: none; }
+@media(max-width:900px) {
+  .sidebar { width: 205px; }
+  .grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media(max-width:650px) {
+  .layout { display: block; }
+  .sidebar { width: 100%; padding: 12px; border-right: 0; border-bottom: 1px solid var(--border); }
+  .logo { padding: 5px 8px 12px; }
+  .nav-list { display: flex; overflow-x: auto; gap: 5px; padding-bottom: 4px; }
+  .nav-button { width: auto; white-space: nowrap; flex-shrink: 0; }
+  .sidebar-bottom { margin-top: 8px; padding-top: 8px; }
+  .main { padding: 17px; }
+  .grid, .grid.three { grid-template-columns: 1fr; }
+  h1 { font-size: 23px; }
+  .card { padding: 17px; }
+}
+@media print {
+  body * { visibility: hidden !important; }
+  #resumePreview, #resumePreview * { visibility: visible !important; }
+  #resumePreview {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: none;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN / SIGNUP -->
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="brand">HireMate AI</div>
+    <p class="muted">Your AI-powered career companion</p>
+
+    <form id="loginForm">
+      <h2>Welcome back</h2>
+      <label>Email
+        <input id="loginEmail" type="email" required autocomplete="email">
+      </label>
+      <label>Password
+        <input id="loginPassword" type="password" required autocomplete="current-password">
+      </label>
+      <button class="btn" type="submit">Login</button>
+      <div id="loginMessage" class="message" aria-live="polite"></div>
+      <p class="small">New here?
+        <button class="btn secondary" id="showSignup" type="button">Create account</button>
+      </p>
+    </form>
+
+    <form id="signupForm" class="hidden">
+      <h2>Create your account</h2>
+      <label>Full name
+        <input id="signupName" required autocomplete="name">
+      </label>
+      <label>Email
+        <input id="signupEmail" type="email" required autocomplete="email">
+      </label>
+      <label>Password (minimum 8 characters)
+        <input id="signupPassword" type="password" minlength="8" required autocomplete="new-password">
+      </label>
+      <button class="btn" type="submit">Sign up</button>
+      <div id="signupMessage" class="message" aria-live="polite"></div>
+      <p class="small">Already registered?
+        <button class="btn secondary" id="showLogin" type="button">Login</button>
+      </p>
+    </form>
+  </div>
+</div>
+
+<!-- MAIN APPLICATION -->
+<div id="appScreen" class="layout hidden">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="brand">HireMate AI</div>
+      <div class="small muted">Career workspace</div>
+    </div>
+
+    <nav class="nav-list" aria-label="Main navigation">
+      <button class="nav-button active" data-page="dashboard">⌂ Dashboard</button>
+      <button class="nav-button" data-page="resume">▤ Resume Builder</button>
+      <button class="nav-button" data-page="ats">✓ ATS Checker</button>
+      <button class="nav-button" data-page="job-match">⌕ Job Description Checker</button>
+      <button class="nav-button" data-page="jobs">☆ Recommended Jobs</button>
+      <button class="nav-button" data-page="tracker">▣ Application Tracker</button>
+      <button class="nav-button" data-page="profile">♙ Profile</button>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div id="sidebarUser" class="small"></div>
+      <button class="btn outline" id="logoutButton" type="button" style="width:100%;margin-top:12px">Logout</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="pageHeading">Dashboard</h1>
+        <div class="subtitle">Build your career, one step at a time.</div>
+      </div>
+      <div class="small muted">HireMate AI · Local workspace</div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section id="page-dashboard" class="page">
+      <div class="card">
+        <h2 id="welcomeText">Welcome!</h2>
+        <p>Manage your resume, check job matches, discover relevant roles and track applications.</p>
+      </div>
+
+      <div class="grid three">
+        <div class="card">
+          <div class="stat-label">Feature 1</div>
+          <h2>Resume Builder</h2>
+          <p class="muted">Create and print a professional resume.</p>
+          <button class="btn" data-go="resume">Build Resume</button>
+        </div>
+        <div class="card">
+          <div class="stat-label">Feature 2</div>
+          <h2>ATS Checker</h2>
+          <p class="muted">Review resume structure and job keywords.</p>
+          <button class="btn" data-go="ats">Check Resume</button>
+        </div>
+        <div class="card">
+          <div class="stat-label">Feature 3</div>
+          <h2>Job Description Checker</h2>
+          <p class="muted">Compare a resume with different job descriptions.</p>
+          <button class="btn" data-go="job-match">Check Job Match</button>
+        </div>
+        <div class="card">
+          <div class="stat-label">Feature 4</div>
+          <h2>Smart Job Recommendations</h2>
+          <p class="muted">Explore sample roles based on your skills.</p>
+          <button class="btn" data-go="jobs">Explore Jobs</button>
+        </div>
+        <div class="card">
+          <div class="stat-label">Feature 5</div>
+          <h2>Application Tracker</h2>
+          <p class="muted">Record companies, dates and application status.</p>
+          <button class="btn" data-go="tracker">Track Applications</button>
+        </div>
+        <div class="card">
+          <h2>Profile</h2>
+          <p class="muted">Save your skills to improve job recommendations.</p>
+          <button class="btn" data-go="profile">Update Profile</button>
+        </div>
+      </div>
+      <p class="footer-note">Scores are rule-based estimates, not official ATS results or guarantees of getting a job. Recommended roles are examples, not verified live vacancies.</p>
+    </section>
+
+    <!-- RESUME BUILDER -->
+    <section id="page-resume" class="page hidden">
+      <div class="card">
+        <h2>Resume Builder</h2>
+        <p class="muted">Enter accurate details. You can preview and save your resume as PDF using your browser's Print dialog.</p>
+
+        <form id="resumeForm">
+          <div class="grid">
+            <label>Full name
+              <input id="rName" required>
+            </label>
+            <label>Email
+              <input id="rEmail" type="email">
+            </label>
+            <label>Phone
+              <input id="rPhone">
+            </label>
+            <label>Location
+              <input id="rLocation" placeholder="City, State">
+            </label>
+          </div>
+
+          <label>Target job role
+            <input id="rRole" placeholder="SOC Analyst L1">
+          </label>
+          <label>Professional summary
+            <textarea id="rSummary" placeholder="Briefly describe your skills, education and goals."></textarea>
+          </label>
+          <label>Skills (comma-separated)
+            <textarea id="rSkills" placeholder="Networking, Linux, SIEM, Splunk"></textarea>
+          </label>
+          <label>Education
+            <textarea id="rEducation" placeholder="Degree, college, graduation year"></textarea>
+          </label>
+          <label>Projects
+            <textarea id="rProjects" placeholder="Project name, tools used, what you built"></textarea>
+          </label>
+          <label>Experience / internships
+            <textarea id="rExperience" placeholder="Internship, role, dates, responsibilities"></textarea>
+          </label>
+
+          <div class="row">
+            <button class="btn" type="submit">Save & Preview</button>
+            <button class="btn secondary" id="printResume" type="button">Print / Save PDF</button>
+          </div>
+          <p id="resumeMessage" class="message" aria-live="polite"></p>
+        </form>
+      </div>
+
+      <div id="resumePreview" class="preview">
+        <h2 id="pName">Your Name</h2>
+        <div id="pContact" class="muted">Email · Phone · Location</div>
+        <h3 id="pRole">Professional Profile</h3>
+        <p id="pSummary">Your professional summary will appear here.</p>
+        <h3>Skills</h3>
+        <p id="pSkills">Add your skills.</p>
+        <h3>Education</h3>
+        <p id="pEducation">Add your education.</p>
+        <h3>Projects</h3>
+        <p id="pProjects">Add your projects.</p>
+        <h3>Experience</h3>
+        <p id="pExperience">Add your experience or internships.</p>
+      </div>
+    </section>
+
+    <!-- ATS CHECKER -->
+<section id="page-ats" class="page hidden">
+  <div class="card">
+    <h2>ATS Resume Checker</h2>
+    <p class="muted">
+      Upload a text-based PDF or DOCX resume. Add a target role
+      and optional job description.
+    </p>
+
+    <form id="atsForm">
+      <label>Resume file (PDF or DOCX, maximum 5 MB)
+        <input id="resumeFile" type="file" accept=".pdf,.docx" required>
+      </label>
+
+      <label>Target job title
+        <input id="jobTitle" placeholder="SOC Analyst L1">
+      </label>
+
+      <label>Job description (optional)
+        <textarea id="jobDescription"
+          placeholder="Paste the job description here for keyword comparison."></textarea>
+      </label>
+
+      <button class="btn" id="analyzeButton" type="submit">
+        Analyze Resume
+      </button>
+    </form>
+
+    <p id="atsMessage" class="message" aria-live="polite"></p>
+  </div>
+
+  <div id="atsResult" class="hidden">
+    <div class="grid">
+      <div class="card">
+        <h2>Estimated ATS Score</h2>
+        <div id="atsScoreNumber" class="stat">0%</div>
+        <div class="progress"><div id="atsScoreBar"></div></div>
+        <p class="small muted">Estimated score only.</p>
+      </div>
+
+      <div class="card">
+        <h2>Resume Structure</h2>
+        <div id="structureScoreNumber" class="stat">0%</div>
+        <div class="progress"><div id="structureScoreBar"></div></div>
+
+        <h3>Detected sections</h3>
+        <div id="presentSections" class="pills"></div>
+
+        <h3>Sections to review</h3>
+        <div id="missingSections" class="pills"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Job Keyword Match</h2>
+      <div id="scoreNumber" class="stat">0%</div>
+      <div class="progress"><div id="scoreBar"></div></div>
+
+      <p id="scoreNote" class="muted small"></p>
+
+      <h3>Matching skills</h3>
+      <div id="matchedSkills" class="pills"></div>
+
+      <h3>Missing skills</h3>
+      <div id="missingSkills" class="pills"></div>
+
+      <h3>Suggestions</h3>
+      <ul id="atsSuggestions" class="list"></ul>
+    </div>
+  </div>
+</section>
+
+    <!-- SEPARATE JOB DESCRIPTION CHECKER -->
+    <section id="page-job-match" class="page hidden">
+      <div class="card">
+        <h2>Job Description Checker</h2>
+        <p class="muted">Upload your resume once, then check it against different job descriptions while this page remains open.</p>
+
+        <form id="jobMatchForm">
+          <label>Resume file (PDF or DOCX, maximum 5 MB)
+            <input id="matchResumeFile" type="file" accept=".pdf,.docx" required>
+          </label>
+          <label>Job title
+            <input id="matchJobTitle" placeholder="SOC Analyst L1">
+          </label>
+          <label>Paste job description
+            <textarea id="matchJobDescription" rows="7" required placeholder="Paste the job description from the company posting."></textarea>
+          </label>
+          <button class="btn" id="matchJobButton" type="submit">Check Job Match</button>
+        </form>
+        <p id="jobMatchMessage" class="message" aria-live="polite"></p>
+      </div>
+
+      <div id="jobMatchResults" class="hidden">
+        <div class="card">
+          <h2>Estimated Job Match</h2>
+          <div id="jobMatchScore" class="stat">0%</div>
+          <div class="progress"><div id="jobMatchScoreBar"></div></div>
+          <p class="small muted">This score compares detected skills with skills found in the job title and description. It does not predict hiring outcomes.</p>
+          <h3>Matching skills</h3>
+          <div id="jobMatchedSkills" class="pills"></div>
+          <h3>Skills to develop or verify</h3>
+          <div id="jobMissingSkills" class="pills"></div>
+          <h3>Suggestions</h3>
+          <ul id="jobMatchSuggestions" class="list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- RECOMMENDED JOBS -->
+<section id="page-jobs" class="page hidden">
+  <div class="card">
+    <h2>Smart Job Recommendations</h2>
+    <p class="muted">
+      Find real job openings matched to your saved resume and skills.
+    </p>
+
+    <div class="form-group">
+      <label for="jobRoleFilter">Job Role</label>
+      <input
+        id="jobRoleFilter"
+        type="text"
+        placeholder="e.g. SOC Analyst, Cybersecurity Analyst"
+        value="cybersecurity"
+      >
+    </div>
+
+    <div class="form-group">
+      <label for="jobLocationFilter">Location</label>
+      <input
+        id="jobLocationFilter"
+        type="text"
+        placeholder="e.g. India, Hyderabad, Bengaluru"
+        value="India"
+      >
+    </div>
+
+    <button class="btn" id="refreshJobs" type="button">
+      Search Jobs
+    </button>
+
+    <div id="jobsList"></div>
+  </div>
+</section>
+    <!-- APPLICATION TRACKER -->
+    <section id="page-tracker" class="page hidden">
+      <div class="card">
+        <h2>Application Tracker</h2>
+        <p class="muted">Record jobs you have applied for and update their status.</p>
+        <form id="trackerForm">
+          <div class="grid">
+            <label>Company
+              <input id="trackerCompany" required placeholder="Company name">
+            </label>
+            <label>Job role
+              <input id="trackerRole" required placeholder="SOC Analyst L1">
+            </label>
+            <label>Application date
+              <input id="trackerDate" type="date" required>
+            </label>
+            <label>Status
+              <select id="trackerStatus">
+                <option>Applied</option>
+                <option>Assessment</option>
+                <option>Interview</option>
+                <option>Offer</option>
+                <option>Rejected</option>
+              </select>
+            </label>
+          </div>
+          <button class="btn" type="submit">Add Application</button>
+        </form>
+        <p id="trackerMessage" class="message" aria-live="polite"></p>
+      </div>
+      <div class="card">
+        <h2>Your Applications</h2>
+        <div id="trackerList"></div>
+      </div>
+    </section>
+
+    <!-- PROFILE -->
+    <section id="page-profile" class="page hidden">
+      <div class="card">
+        <h2>My Profile</h2>
+        <p class="muted">Save your professional skills for job recommendations.</p>
+        <form id="profileForm">
+          <label>Full name
+            <input id="profileName" required>
+          </label>
+          <label>Email
+            <input id="profileEmail" type="email" disabled>
+          </label>
+          <label>Target job role
+            <input id="profileRole" placeholder="SOC Analyst L1">
+          </label>
+          <label>Skills (comma-separated)
+            <textarea id="profileSkills" rows="5" placeholder="Networking, Linux, SIEM, Splunk, Cybersecurity"></textarea>
+          </label>
+          <button class="btn" type="submit">Save Profile</button>
+          <p id="profileMessage" class="message" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+"use strict";
+
+const API_URL = "http://127.0.0.1:8001";
+let currentUser = null;
+let authToken = null;
+let jobMatchResumeFile = null;
+
+const $ = id => document.getElementById(id);
+$("resumeFile").addEventListener("change", () => {
+const file = $("resumeFile").files[0];
+if (file) jobMatchResumeFile = file;
+});
+const sampleJobs = [
+  {
+    role: "SOC Analyst L1",
+    skills: ["Networking", "Linux", "SIEM", "Splunk", "Cybersecurity", "Incident Response", "Threat Analysis"],
+    description: "Monitor security alerts, investigate suspicious activity, review SIEM events and document incidents."
+  },
+  {
+    role: "Junior Python Developer",
+    skills: ["Python", "SQL", "FastAPI", "Git", "Problem Solving"],
+    description: "Develop Python applications, build APIs, test features and work with databases."
+  },
+  {
+    role: "Junior Data Analyst",
+    skills: ["SQL", "Excel", "Power BI", "Python", "Data Analysis", "Tableau"],
+    description: "Analyze datasets, clean data and prepare dashboards and reports."
+  },
+  {
+    role: "Junior Machine Learning Engineer",
+    skills: ["Python", "Machine Learning", "Pandas", "NumPy", "Scikit-learn"],
+    description: "Prepare data, train machine learning models and evaluate their performance."
+  }
+];
+
+function userKey(suffix) {
+  return "hiremate_" + currentUser.id + "_" + suffix;
+}
+
+function readData(key, fallback) {
+  try {
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function saveData(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function setMessage(id, text, success = false) {
+  const el = $(id);
+  el.textContent = text || "";
+  el.classList.toggle("success", success);
+}
+
+async function api(path, options = {}) {
+  const response = await fetch(API_URL + path, options);
+  let data = {};
+  try { data = await response.json(); } catch {}
+  if (!response.ok) {
+    throw new Error(data.detail || data.message || "Request failed.");
+  }
+  return data;
+}
+
+function setAuthMode(mode) {
+  $("loginForm").classList.toggle("hidden", mode !== "login");
+  $("signupForm").classList.toggle("hidden", mode !== "signup");
+  setMessage("loginMessage", "");
+  setMessage("signupMessage", "");
+}
+
+$("showSignup").addEventListener("click", () => setAuthMode("signup"));
+$("showLogin").addEventListener("click", () => setAuthMode("login"));
+
+$("signupForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  setMessage("signupMessage", "Creating account...");
+  try {
+    const result = await api("/api/signup", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        name: $("signupName").value.trim(),
+        email: $("signupEmail").value.trim(),
+        password: $("signupPassword").value
+      })
+    });
+    setMessage("signupMessage", result.message, true);
+    $("loginEmail").value = $("signupEmail").value.trim();
+    $("loginPassword").value = "";
+    setAuthMode("login");
+    setMessage("loginMessage", "Account created. Please log in.", true);
+  } catch (error) {
+    setMessage("signupMessage", error.message);
+  }
+});
+
+$("loginForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  setMessage("loginMessage", "Logging in...");
+  try {
+    const result = await api("/api/login", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        email: $("loginEmail").value.trim(),
+        password: $("loginPassword").value
+      })
+    });
+    authToken = result.token;
+    currentUser = result.user;
+    localStorage.setItem("hiremate_token", authToken);
+    localStorage.setItem("hiremate_user", JSON.stringify(currentUser));
+    enterApp();
+  } catch (error) {
+    setMessage("loginMessage", error.message);
+  }
+});
+
+async function restoreSession() {
+  console.log("RESTORE SESSION STARTED");
+
+  const token = localStorage.getItem("hiremate_token");
+  if (!token) return;
+
+  try {
+    const result = await api("/api/me?token=" + encodeURIComponent(token));
+    authToken = token;
+    currentUser = result.user;
+
+    console.log("SESSION RESTORED");
+    enterApp();
+  } catch (error) {
+    console.log("SESSION RESTORE FAILED:", error);
+    localStorage.removeItem("hiremate_token");
+    localStorage.removeItem("hiremate_user");
+  }
+}
+
+function enterApp() {
+  $("authScreen").classList.add("hidden");
+  $("appScreen").classList.remove("hidden");
+  $("sidebarUser").textContent = currentUser.name;
+  $("welcomeText").textContent = "Welcome, " + currentUser.name + "!";
+  loadResume();
+  loadProfile();
+  renderJobs();
+  renderTracker();
+  showPage("dashboard");
+}
+
+async function logout() {
+  try {
+    if (authToken) {
+      await api("/api/logout", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({token: authToken})
+      });
+    }
+  } catch {}
+  authToken = null;
+  currentUser = null;
+  jobMatchResumeFile = null;
+  localStorage.removeItem("hiremate_token");
+  localStorage.removeItem("hiremate_user");
+  $("appScreen").classList.add("hidden");
+  $("authScreen").classList.remove("hidden");
+  $("loginForm").reset();
+  setAuthMode("login");
+}
+$("logoutButton").addEventListener("click", logout);
+
+const pageNames = {
+  dashboard: "Dashboard",
+  resume: "Resume Builder",
+  ats: "ATS Resume Checker",
+  "job-match": "Job Description Checker",
+  jobs: "Recommended Jobs",
+  tracker: "Application Tracker",
+  profile: "My Profile"
+};
+window.addEventListener("beforeunload",() => {
+  console.log("PAGE IS RELOADING");
+})
+function showPage(page) {
+  console.trace("PAGE CHANGED TO:",page);
+  if (!pageNames[page]) return;
+  document.querySelectorAll(".page").forEach(section => {
+    section.classList.toggle("hidden", section.id !== "page-" + page);
+  });
+  document.querySelectorAll(".nav-button").forEach(button => {
+    button.classList.toggle("active", button.dataset.page === page);
+  });
+  $("pageHeading").textContent = pageNames[page];
+  if (page === "jobs") renderJobs();
+  if (page === "tracker") renderTracker();
+}
+
+document.querySelectorAll("[data-page]").forEach(button => {
+  button.addEventListener("click", () => showPage(button.dataset.page));
+});
+document.querySelectorAll("[data-go]").forEach(button => {
+  button.addEventListener("click", () => showPage(button.dataset.go));
+});
+
+function getResumeData() {
+  return {
+    name: $("rName").value.trim(),
+    email: $("rEmail").value.trim(),
+    phone: $("rPhone").value.trim(),
+    location: $("rLocation").value.trim(),
+    role: $("rRole").value.trim(),
+    summary: $("rSummary").value.trim(),
+    skills: $("rSkills").value.trim(),
+    education: $("rEducation").value.trim(),
+    projects: $("rProjects").value.trim(),
+    experience: $("rExperience").value.trim()
+  };
+}
+
+function renderResumePreview(data = getResumeData()) {
+  $("pName").textContent = data.name || "Your Name";
+  $("pContact").textContent = [
+    data.email, data.phone, data.location
+  ].filter(Boolean).join(" | ") || "Email · Phone · Location";
+  $("pRole").textContent = data.role || "Professional Profile";
+  $("pSummary").textContent = data.summary || "Add your professional summary.";
+  $("pSkills").textContent = data.skills || "Add your skills.";
+  $("pEducation").textContent = data.education || "Add your education.";
+  $("pProjects").textContent = data.projects || "Add your projects.";
+  $("pExperience").textContent = data.experience || "Add your experience.";
+}
+
+function loadResume() {
+  const data = readData(userKey("resume"), null);
+  if (data) {
+    const map = {
+      name: "rName", email: "rEmail", phone: "rPhone",
+      location: "rLocation", role: "rRole", summary: "rSummary",
+      skills: "rSkills", education: "rEducation",
+      projects: "rProjects", experience: "rExperience"
+    };
+    Object.entries(map).forEach(([key, id]) => {
+      $(id).value = data[key] || "";
+    });
+    renderResumePreview(data);
+  }
+}
+
+$("resumeForm").addEventListener("submit", event => {
+  event.preventDefault();
+  const data = getResumeData();
+  saveData(userKey("resume"), data);
+  renderResumePreview(data);
+  setMessage("resumeMessage", "Resume saved in this browser and preview updated.", true);
+  renderJobs();
+});
+
+$("printResume").addEventListener("click", () => {
+  renderResumePreview();
+  window.print();
+});
+
+function renderPills(id, values, color = "") {
+  const el = $(id);
+  el.replaceChildren();
+  const items = Array.isArray(values) ? values : [];
+  if (!items.length) {
+    const span = document.createElement("span");
+    span.className = "muted small";
+    span.textContent = "None detected.";
+    el.appendChild(span);
+    return;
+  }
+  items.forEach(value => {
+    const span = document.createElement("span");
+    span.className = "pill " + color;
+    span.textContent = value;
+    el.appendChild(span);
+  });
+}
+
+function renderList(id, values) {
+  const el = $(id);
+  el.replaceChildren();
+  (Array.isArray(values) ? values : []).forEach(value => {
+    const li = document.createElement("li");
+    li.textContent = value;
+    el.appendChild(li);
+  });
+}
+
+function updateProgress(id, value) {
+  $(id).style.width =
+    Math.max(0, Math.min(100, Number(value) || 0)) + "%";
+}
+
+// ATS Resume Checker
+$("atsForm").addEventListener("submit", async function(event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  console.log("ATS ANALYSIS STARTED");
+
+  const file = $("resumeFile").files[0];
+
+  if (!file) {
+    setMessage("atsMessage", "Please select a resume file.");
+    return;
+  }
+
+  const button = $("analyzeButton");
+
+  button.disabled = true;
+  button.textContent = "Analyzing...";
+
+  $("atsResult").classList.add("hidden");
+  setMessage("atsMessage", "Analyzing your resume...", false);
+
+  try {
+    const form = new FormData();
+
+    form.append("file", file);
+    form.append("job_title", $("jobTitle").value.trim());
+    form.append("job_description", $("jobDescription").value.trim());
+
+    // Save resume for the logged-in user
+    const saveForm = new FormData();
+
+    saveForm.append("token", authToken);
+    saveForm.append("file", file);
+    await api("/api/resume", {
+      method: "POST",
+      body: saveForm
+    })
+
+    // Resume saving temporarily disabled for testing
+
+    // Analyze resume
+    const result = await api("/api/analyze-resume", {
+      method: "POST",
+      body: form
+    });
+
+    // Display scores
+    $("atsScoreNumber").textContent =
+      result.ats_score + "%";
+
+    updateProgress("atsScoreBar", result.ats_score);
+
+    $("structureScoreNumber").textContent =
+      result.structure_score + "%";
+
+    updateProgress("structureScoreBar", result.structure_score);
+
+    $("scoreNumber").textContent =
+      result.keyword_score + "%";
+
+    updateProgress("scoreBar", result.keyword_score);
+
+    $("scoreNote").textContent =
+      result.note || "Estimated keyword match.";
+
+    // Display sections and skills
+    renderPills(
+      "presentSections",
+      result.present_sections,
+      "green"
+    );
+
+    renderPills(
+      "missingSections",
+      result.missing_sections,
+      "red"
+    );
+
+    renderPills(
+      "matchedSkills",
+      result.matched_skills,
+      "green"
+    );
+
+    renderPills(
+      "missingSkills",
+      result.missing_skills,
+      "red"
+    );
+
+    renderList("atsSuggestions", result.suggestions);
+
+    // Show results without changing pages
+    $("atsResult").classList.remove("hidden");
+
+    setMessage(
+      "atsMessage",
+      "✓ Resume analyzed successfully!",
+      true
+    );
+
+    console.log("ATS ANALYSIS COMPLETED");
+
+    $("atsResult").scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+
+  } catch (error) {
+    console.error("ATS analysis error:", error);
+
+    setMessage(
+      "atsMessage",
+      error.message || "Resume analysis failed.",
+      false
+    );
+
+  } finally {
+    button.disabled = false;
+    button.textContent = "Analyze Resume";
+  }
+});
+
+/* Job Description Checker: selected file can be reused for multiple checks
+   while this page remains open. The browser will require re-selection after refresh. */
+$("matchResumeFile").addEventListener("change", () => {
+  jobMatchResumeFile = $("matchResumeFile").files[0] || null;
+});
+
+$("jobMatchForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  if (!jobMatchResumeFile) {
+    setMessage("jobMatchMessage", "Please select your resume first.");
+    return;
+  }
+
+  const description = $("matchJobDescription").value.trim();
+  if (!description) {
+    setMessage("jobMatchMessage", "Paste a job description first.");
+    return;
+  }
+
+  const button = $("matchJobButton");
+  button.disabled = true;
+  button.textContent = "Checking...";
+  $("jobMatchResults").classList.add("hidden");
+  setMessage("jobMatchMessage", "");
+
+  try {
+    const form = new FormData();
+    form.append("file", jobMatchResumeFile);
+    form.append("job_title", $("matchJobTitle").value.trim());
+    form.append("job_description", description);
+
+    const result = await api("/api/job-match", {
+      method: "POST",
+      body: form
+    });
+
+    $("jobMatchScore").textContent = result.job_match_score + "%";
+    updateProgress("jobMatchScoreBar", result.job_match_score);
+    renderPills("jobMatchedSkills", result.matched_skills, "green");
+    renderPills("jobMissingSkills", result.missing_skills, "red");
+    renderList("jobMatchSuggestions", result.suggestions);
+    $("jobMatchResults").classList.remove("hidden");
+    setMessage("jobMatchMessage", "Job match check complete.", true);
+  } catch (error) {
+    setMessage("jobMatchMessage", error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Check Job Match";
+  }
+});
+
+async function checkSavedResume() {
+  if (!currentUser || !authToken) return false;
+
+  try {
+    const result = await api(
+      "/api/resume?token=" + encodeURIComponent(authToken)
+    );
+
+    if (result.exists) {
+      console.log("Saved resume found:", result.filename);
+      return true;
+    }
+
+    console.log("No saved resume found.");
+    return false;
+  } catch (error) {
+    console.error("Resume check failed:", error.message);
+    return false;
+  }
+}
+
+function getUserSkills() {
+  const profile = readData(userKey("profile"), {});
+  const resume = readData(userKey("resume"), {});
+  const combined = [
+    ...(profile.skills || []),
+    ...(resume.skills || "").split(",")
+  ];
+  return [...new Set(combined.map(s => String(s).trim().toLowerCase()).filter(Boolean))];
+}
+
+async function renderJobs() {
+  if (!currentUser || !authToken) return;
+
+  const list = $("jobsList");
+  list.replaceChildren();
+
+  const role =
+    $("jobRoleFilter").value.trim() || "cybersecurity";
+
+  const location =
+    $("jobLocationFilter").value.trim() || "India";
+
+  const loading = document.createElement("p");
+  loading.textContent = "Finding jobs matched to your saved resume...";
+  list.appendChild(loading);
+
+  try {
+    // Use the resume already saved in the backend.
+    // No need to upload the resume again.
+    const formData = new FormData();
+
+    formData.append("token", authToken);
+    formData.append("title", role);
+    formData.append("location", location);
+    formData.append("page", "1");
+
+    const response = await fetch(
+      `${API_URL}/api/jobs/match`,
+      {
+        method: "POST",
+        body: formData
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.detail || "Could not find matching jobs."
+      );
+    }
+
+    const jobs = Array.isArray(data.jobs) ? data.jobs : [];
+
+    list.replaceChildren();
+
+    const resumeInfo = document.createElement("p");
+    resumeInfo.className = "small muted";
+    resumeInfo.textContent =
+      "Using saved resume: " +
+      (data.resume_filename || "Your saved resume");
+
+    list.appendChild(resumeInfo);
+
+    if (!jobs.length) {
+      const message = document.createElement("p");
+      message.textContent =
+        "No jobs found. Try another role or location.";
+
+      list.appendChild(message);
+      return;
+    }
+
+    jobs.forEach(job => {
+      const title =
+        job.role || job.title || "Job opening";
+
+      const description =
+        job.description || "Description unavailable.";
+
+      const company =
+        typeof job.company === "object"
+          ? job.company?.display_name || "Not specified"
+          : job.company || "Not specified";
+
+      const jobLocation =
+        typeof job.location === "object"
+          ? job.location?.display_name || location
+          : job.location || location;
+
+      const applyUrl =
+        job.url || job.redirect_url || job.apply_url || "";
+
+      const score = Math.max(
+        0,
+        Math.min(100, Number(job.match_score) || 0)
+      );
+
+      const matchedSkills = Array.isArray(job.matched_skills)
+        ? job.matched_skills
+        : [];
+
+      const missingSkills = Array.isArray(job.missing_skills)
+        ? job.missing_skills
+        : [];
+
+      const card = document.createElement("div");
+      card.className = "job-card";
+
+      const heading = document.createElement("h3");
+      heading.textContent = title;
+      card.appendChild(heading);
+
+      const companyLine = document.createElement("p");
+      companyLine.textContent = "Company: " + company;
+      card.appendChild(companyLine);
+
+      const locationLine = document.createElement("p");
+      locationLine.textContent = "Location: " + jobLocation;
+      card.appendChild(locationLine);
+
+      const scoreLine = document.createElement("p");
+      scoreLine.className = "small";
+      scoreLine.textContent =
+        "Estimated Resume Match: " + score + "%";
+      card.appendChild(scoreLine);
+
+      const progress = document.createElement("div");
+      progress.className = "progress";
+
+      const bar = document.createElement("div");
+      bar.style.width = score + "%";
+      progress.appendChild(bar);
+
+      card.appendChild(progress);
+
+      const matchedLine = document.createElement("p");
+      matchedLine.textContent = matchedSkills.length
+        ? "Matched skills: " + matchedSkills.join(", ")
+        : "Matched skills: No matching skills identified";
+
+      card.appendChild(matchedLine);
+
+      const missingLine = document.createElement("p");
+      missingLine.textContent = missingSkills.length
+        ? "Skills to consider learning: " + missingSkills.join(", ")
+        : "Skills to consider learning: None identified";
+
+      card.appendChild(missingLine);
+
+      const details = document.createElement("p");
+      details.textContent =
+        description.length > 500
+          ? description.slice(0, 500) + "..."
+          : description;
+
+      card.appendChild(details);
+
+      if (applyUrl) {
+        try {
+          const url = new URL(applyUrl);
+
+          if (
+            url.protocol === "https:" ||
+            url.protocol === "http:"
+          ) {
+            const apply = document.createElement("a");
+
+            apply.className = "btn";
+            apply.textContent = "Apply Now";
+            apply.href = url.href;
+            apply.target = "_blank";
+            apply.rel = "noopener noreferrer";
+
+            card.appendChild(apply);
+          }
+        } catch {
+          // Ignore invalid application URLs.
+        }
+      }
+
+      list.appendChild(card);
+    });
+
+  } catch (error) {
+    console.error("Job loading error:", error);
+
+    list.replaceChildren();
+
+    const message = document.createElement("p");
+
+    message.textContent =
+      error.message === "Please upload your resume first."
+        ? "Please upload your resume in ATS Checker first."
+        : error.message ||
+          "Could not load jobs. Check the backend server.";
+
+    list.appendChild(message);
+  }
+}
+$("refreshJobs").addEventListener("click", renderJobs);
+
+function loadProfile() {
+  const saved = readData(userKey("profile"), {});
+  $("profileName").value = saved.name || currentUser.name || "";
+  $("profileEmail").value = currentUser.email || "";
+  $("profileRole").value = saved.role || "";
+  $("profileSkills").value = Array.isArray(saved.skills) ? saved.skills.join(", ") : "";
+
+  if (!saved.skills || !saved.skills.length) {
+    const resume = readData(userKey("resume"), {});
+    $("profileSkills").value = resume.skills || "";
+  }
+}
+
+$("profileForm").addEventListener("submit", event => {
+  event.preventDefault();
+  const profile = {
+    name: $("profileName").value.trim(),
+    role: $("profileRole").value.trim(),
+    skills: $("profileSkills").value.split(",").map(s => s.trim()).filter(Boolean)
+  };
+  saveData(userKey("profile"), profile);
+  $("sidebarUser").textContent = profile.name || currentUser.name;
+  $("welcomeText").textContent = "Welcome, " + (profile.name || currentUser.name) + "!";
+  setMessage("profileMessage", "Profile saved successfully.", true);
+  renderJobs();
+});
+
+function renderTracker() {
+  if (!currentUser) return;
+  const list = $("trackerList");
+  list.replaceChildren();
+  const items = readData(userKey("tracker"), []);
+
+  if (!items.length) {
+    const p = document.createElement("p");
+    p.className = "muted";
+    p.textContent = "No applications added yet.";
+    list.appendChild(p);
+    return;
+  }
+
+  items.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "tracker-item";
+
+    const heading = document.createElement("h3");
+    heading.textContent = item.company + " — " + item.role;
+    card.appendChild(heading);
+
+    const detail = document.createElement("p");
+    detail.className = "small muted";
+    detail.textContent = "Date: " + item.date + " · Status: " + item.status;
+    card.appendChild(detail);
+
+    const controls = document.createElement("div");
+    controls.className = "row";
+
+    const statusSelect = document.createElement("select");
+    ["Applied", "Assessment", "Interview", "Offer", "Rejected"].forEach(status => {
+      const option = document.createElement("option");
+      option.value = status;
+      option.textContent = status;
+      statusSelect.appendChild(option);
+    });
+    statusSelect.value = item.status;
+    statusSelect.setAttribute("aria-label", "Update application status");
+    statusSelect.addEventListener("change", () => {
+      const all = readData(userKey("tracker"), []);
+      const target = all.find(x => x.id === item.id);
+      if (target) target.status = statusSelect.value;
+      saveData(userKey("tracker"), all);
+      renderTracker();
+    });
+    controls.appendChild(statusSelect);
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "btn danger";
+    remove.textContent = "Delete";
+    remove.addEventListener("click", () => {
+      const updated = readData(userKey("tracker"), []).filter(x => x.id !== item.id);
+      saveData(userKey("tracker"), updated);
+      renderTracker();
+    });
+    controls.appendChild(remove);
+    card.appendChild(controls);
+    list.appendChild(card);
+  });
+}
+
+$("trackerDate").value = new Date().toISOString().slice(0, 10);
+
+$("trackerForm").addEventListener("submit", event => {
+  event.preventDefault();
+
+  const item = {
+    id: Date.now().toString() + Math.random().toString(16).slice(2),
+    company: $("trackerCompany").value.trim(),
+    role: $("trackerRole").value.trim(),
+    date: $("trackerDate").value,
+    status: $("trackerStatus").value
+  };
+
+  const items = readData(userKey("tracker"), []);
+  items.unshift(item);
+  saveData(userKey("tracker"), items);
+  $("trackerForm").reset();
+  $("trackerDate").value = new Date().toISOString().slice(0, 10);
+  setMessage("trackerMessage", "Application added.", true);
+  renderTracker();
+});
+
+setAuthMode("login");
+restoreSession();
+</script>
+</body>
+</html>
