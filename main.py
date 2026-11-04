@@ -300,34 +300,38 @@ def google_login(data: dict):
 # --------------------------------------------------
 
 def send_reset_otp(email, otp):
-    if not SMTP_EMAIL or not SMTP_APP_PASSWORD:
-        raise HTTPException(
-            503,
-            "Password reset email service is not configured."
-        )
+    api_key = os.getenv("RESEND_API_KEY", "").strip()
 
-    message = EmailMessage()
-    message["Subject"] = "HireMate AI Password Reset Code"
-    message["From"] = SMTP_EMAIL
-    message["To"] = email
-
-    message.set_content(
-        f"Your HireMate AI password reset code is {otp}. "
-        "It expires in 10 minutes. If you did not request this, ignore this email."
-    )
+    if not api_key:
+        raise HTTPException(503, "Resend API key is not configured.")
 
     try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as server:
-            server.starttls()
-            server.login(SMTP_EMAIL, SMTP_APP_PASSWORD)
-            server.send_message(message)
-    except Exception as e:
-        print("SMTP ERROR:", type(e).__name__, str(e), flush=True)
-        raise HTTPException(
-            502,
-            "Could not send the reset email. Please try again later."
+        response = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "from": "HireMate AI <onboarding@resend.dev>",
+                "to": [email],
+                "subject": "HireMate AI Password Reset Code",
+                "text": (
+                    f"Your HireMate AI password reset code is {otp}. "
+                    "It expires in 10 minutes. "
+                    "If you did not request this, ignore this email."
+                )
+            },
+            timeout=20
         )
 
+        if response.status_code not in (200, 201):
+            print("RESEND ERROR:", response.status_code, response.text, flush=True)
+            raise HTTPException(502, "Could not send reset email.")
+
+    except requests.RequestException as e:
+        print("RESEND CONNECTION ERROR:", str(e), flush=True)
+        raise HTTPException(502, "Email service connection failed.")
 
 @app.post("/api/forgot-password")
 def forgot_password(data: dict):
