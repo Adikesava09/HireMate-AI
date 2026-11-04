@@ -301,6 +301,7 @@ def google_login(data: dict):
 
 def send_reset_otp(email, otp):
     api_key = os.getenv("BREVO_API_KEY", "").strip()
+    print("BREVO KEY LOADED:", bool(api key), flush=true)
 
     if not api_key:
         raise HTTPException(503, "Brevo API key is not configured.")
