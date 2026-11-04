@@ -4,6 +4,9 @@ import os
 import hashlib
 import secrets
 from pathlib import Path
+import smtplib
+import time
+from email.message import EmailMessage
 
 import requests
 import psycopg
@@ -27,6 +30,10 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 ADZUNA_APP_ID = os.getenv("ADZUNA_APP_ID")
 ADZUNA_APP_KEY = os.getenv("ADZUNA_APP_KEY")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+SMTP_EMAIL = os.getenv("SMTP_EMAIL", "").strip()
+SMTP_APP_PASSWORD = os.getenv("SMTP_APP_PASSWORD", "").replace(" ", "")
+SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is missing. Add it to your .env file.")
@@ -287,8 +294,166 @@ def google_login(data: dict):
                 ON CONFLICT(google_sub) DO NOTHING""",
                 (google_sub, user["id"])
             )
-
     return create_login_session(user)
+    # --------------------------------------------------
+# FORGOT PASSWORD - OTP VERIFICATION
+# --------------------------------------------------
+
+def send_reset_otp(email, otp):
+    if not SMTP_EMAIL or not SMTP_APP_PASSWORD:
+        raise HTTPException(
+            503,
+            "Password reset email service is not configured."
+        )
+
+    message = EmailMessage()
+    message["Subject"] = "HireMate AI Password Reset Code"
+    message["From"] = SMTP_EMAIL
+    message["To"] = email
+
+    message.set_content(
+        f"Your HireMate AI password reset code is {otp}. "
+        "It expires in 10 minutes. If you did not request this, ignore this email."
+    )
+
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as server:
+            server.starttls()
+            server.login(SMTP_EMAIL, SMTP_APP_PASSWORD)
+            server.send_message(message)
+    except Exception:
+        raise HTTPException(
+            502,
+            "Could not send the reset email. Please try again later."
+        )
+
+
+@app.post("/api/forgot-password")
+def forgot_password(data: dict):
+    email = str(data.get("email", "")).strip().lower()
+
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        raise HTTPException(400, "Enter a valid email address.")
+
+    otp = None
+
+    with connect_db() as con:
+        user = con.execute(
+            "SELECT id FROM users WHERE LOWER(email) = %s",
+            (email,)
+        ).fetchone()
+
+        if user:
+            previous = con.execute(
+                "SELECT last_sent_at FROM password_reset_otps WHERE email = %s",
+                (email,)
+            ).fetchone()
+
+            if previous and (
+                time.time() - previous["last_sent_at"].timestamp()
+            ) < 60:
+                raise HTTPException(
+                    429,
+                    "Please wait 60 seconds before requesting another code."
+                )
+
+            otp = f"{secrets.randbelow(1000000):06d}"
+
+            otp_hash = hashlib.sha256(
+                (otp + os.getenv("OTP_PEPPER", "hiremate-reset-v1")).encode()
+            ).hexdigest()
+
+            con.execute("""
+                INSERT INTO password_reset_otps
+                (email, otp_hash, expires_at, attempts, last_sent_at)
+                VALUES (
+                    %s, %s,
+                    CURRENT_TIMESTAMP + INTERVAL '10 minutes',
+                    0, CURRENT_TIMESTAMP
+                )
+                ON CONFLICT(email) DO UPDATE SET
+                    otp_hash = EXCLUDED.otp_hash,
+                    expires_at = EXCLUDED.expires_at,
+                    attempts = 0,
+                    last_sent_at = CURRENT_TIMESTAMP
+            """, (email, otp_hash))
+
+    if otp:
+        send_reset_otp(email, otp)
+
+    return {
+        "message": "If an account exists for that email, a reset code has been sent."
+    }
+
+
+@app.post("/api/reset-password")
+def reset_password(data: dict):
+    email = str(data.get("email", "")).strip().lower()
+    otp = str(data.get("otp", "")).strip()
+    password = str(data.get("new_password", ""))
+
+    if (
+        not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email)
+        or not re.fullmatch(r"\d{6}", otp)
+    ):
+        raise HTTPException(
+            400,
+            "Enter the registered email and 6-digit code."
+        )
+
+    if len(password) < 8:
+        raise HTTPException(
+            400,
+            "Password must contain at least 8 characters."
+        )
+
+    otp_hash = hashlib.sha256(
+        (otp + os.getenv("OTP_PEPPER", "hiremate-reset-v1")).encode()
+    ).hexdigest()
+
+    with connect_db() as con:
+        row = con.execute(
+            "SELECT * FROM password_reset_otps WHERE email = %s",
+            (email,)
+        ).fetchone()
+
+        if (
+            not row
+            or row["expires_at"].timestamp() < time.time()
+            or row["attempts"] >= 5
+            or not secrets.compare_digest(otp_hash, row["otp_hash"])
+        ):
+            if row:
+                con.execute(
+                    "UPDATE password_reset_otps SET attempts = attempts + 1 WHERE email = %s",
+                    (email,)
+                )
+
+            raise HTTPException(
+                400,
+                "Invalid or expired code. Request a new code."
+            )
+
+        salt = secrets.token_hex(16)
+
+        con.execute(
+            "UPDATE users SET password_hash = %s, salt = %s WHERE LOWER(email) = %s",
+            (hash_password(password, salt), salt, email)
+        )
+
+        con.execute(
+            "DELETE FROM sessions WHERE user_id = (SELECT id FROM users WHERE LOWER(email) = %s)",
+            (email,)
+        )
+
+        con.execute(
+            "DELETE FROM password_reset_otps WHERE email = %s",
+            (email,)
+        )
+
+    return {
+        "message": "Password reset successfully. Please log in with your new password."
+    }
 @app.get("/api/me")
 def me(token: str = ""):
     user = get_user_from_token(token)
