@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HireMate AI</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root {
   --primary: #6254e8;
@@ -259,6 +260,13 @@ p { line-height: 1.5; }
       </label>
       <button class="btn" type="submit">Login</button>
       <div id="loginMessage" class="message" aria-live="polite"></div>
+
+      <p class="small">
+        <button class="btn secondary" id="forgotLink" type="button">Forgot Password?</button>
+      </p>
+
+      <div id="googleButton" style="margin-top:15px"></div>
+
       <p class="small">New here?
         <button class="btn secondary" id="showSignup" type="button">Create account</button>
       </p>
@@ -279,6 +287,40 @@ p { line-height: 1.5; }
       <div id="signupMessage" class="message" aria-live="polite"></div>
       <p class="small">Already registered?
         <button class="btn secondary" id="showLogin" type="button">Login</button>
+      </p>
+    </form>
+
+    <form id="forgotForm" class="hidden">
+      <h2>Forgot Password</h2>
+      <p class="muted small">Enter your registered email to receive an OTP.</p>
+      <label>Email
+        <input id="forgotEmail" type="email" required>
+      </label>
+      <button class="btn" type="submit">Send OTP</button>
+      <div id="forgotMessage" class="message" aria-live="polite"></div>
+      <p class="small">
+        <button class="btn secondary" id="backToLogin1" type="button">Back to Login</button>
+      </p>
+    </form>
+
+    <form id="resetForm" class="hidden">
+      <h2>Verify OTP & Reset Password</h2>
+      <label>Registered Email
+        <input id="resetEmail" type="email" required>
+      </label>
+      <label>6-digit OTP
+        <input id="resetOtp" type="text" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required>
+      </label>
+      <label>New Password
+        <input id="newPassword" type="password" minlength="8" required>
+      </label>
+      <label>Confirm Password
+        <input id="confirmPassword" type="password" minlength="8" required>
+      </label>
+      <button class="btn" type="submit">Reset Password</button>
+      <div id="resetMessage" class="message" aria-live="polite"></div>
+      <p class="small">
+        <button class="btn secondary" id="backToLogin2" type="button">Back to Login</button>
       </p>
     </form>
   </div>
@@ -703,17 +745,145 @@ async function api(path, options = {}) {
   }
   return data;
 }
-
 function setAuthMode(mode) {
-  $("loginForm").classList.toggle("hidden", mode !== "login");
-  $("signupForm").classList.toggle("hidden", mode !== "signup");
-  setMessage("loginMessage", "");
-  setMessage("signupMessage", "");
+  ["loginForm", "signupForm", "forgotForm", "resetForm"].forEach(id => {
+    $(id).classList.add("hidden");
+  });
+
+  const form = {
+    login: "loginForm",
+    signup: "signupForm",
+    forgot: "forgotForm",
+    reset: "resetForm"
+  }[mode];
+
+  if (form) $(form).classList.remove("hidden");
+
+  ["loginMessage", "signupMessage", "forgotMessage", "resetMessage"]
+    .forEach(id => setMessage(id, ""));
 }
 
 $("showSignup").addEventListener("click", () => setAuthMode("signup"));
 $("showLogin").addEventListener("click", () => setAuthMode("login"));
+// FORGOT PASSWORD
+$("forgotLink").addEventListener("click", () => {
+  $("forgotEmail").value = $("loginEmail").value.trim();
+  setAuthMode("forgot");
+});
 
+$("backToLogin1").addEventListener("click", () => setAuthMode("login"));
+$("backToLogin2").addEventListener("click", () => setAuthMode("login"));
+
+$("forgotForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const email = $("forgotEmail").value.trim();
+  setMessage("forgotMessage", "Sending OTP...");
+
+  try {
+    await api("/api/forgot-password", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({email})
+    });
+
+    $("resetEmail").value = email;
+    setAuthMode("reset");
+    setMessage("resetMessage",
+      "If your account exists, an OTP has been sent to your email.", true);
+  } catch (error) {
+    setMessage("forgotMessage", error.message);
+  }
+});
+
+// VERIFY OTP AND RESET PASSWORD
+$("resetForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const email = $("resetEmail").value.trim();
+  const otp = $("resetOtp").value.trim();
+  const password = $("newPassword").value;
+  const confirm = $("confirmPassword").value;
+
+  if (password !== confirm) {
+    setMessage("resetMessage", "Passwords do not match.");
+    return;
+  }
+
+  setMessage("resetMessage", "Resetting password...");
+
+  try {
+    const result = await api("/api/reset-password", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        email,
+        otp,
+        new_password: password
+      })
+    });
+
+    setAuthMode("login");
+    $("loginEmail").value = email;
+    $("loginPassword").value = "";
+    setMessage("loginMessage", result.message, true);
+  } catch (error) {
+    setMessage("resetMessage", error.message);
+  }
+});
+
+// GOOGLE LOGIN
+const GOOGLE_CLIENT_ID =
+  "37321939118-00gtinq0rv700nf8mimeuru9c8uo4mvs.apps.googleusercontent.com";
+
+async function handleGoogleCredential(response) {
+  setMessage("loginMessage", "Signing in with Google...");
+
+  try {
+    const result = await api("/api/auth/google", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        credential: response.credential
+      })
+    });
+
+    authToken = result.token;
+    currentUser = result.user;
+
+    localStorage.setItem("hiremate_token", authToken);
+    localStorage.setItem("hiremate_user", JSON.stringify(currentUser));
+
+    enterApp();
+  } catch (error) {
+    setMessage("loginMessage", error.message);
+  }
+}
+
+function initializeGoogleLogin() {
+  if (!window.google || !google.accounts || !google.accounts.id) {
+    setTimeout(initializeGoogleLogin, 500);
+    return;
+  }
+
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential
+  });
+
+  google.accounts.id.renderButton(
+    $("googleButton"),
+    {
+      theme: "outline",
+      size: "large",
+      text: "continue_with",
+      shape: "rectangular",
+      width: 350
+    }
+  );
+}
+
+initializeGoogleLogin();
 $("signupForm").addEventListener("submit", async event => {
   event.preventDefault();
   setMessage("signupMessage", "Creating account...");
