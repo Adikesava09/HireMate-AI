@@ -300,23 +300,27 @@ def google_login(data: dict):
 # --------------------------------------------------
 
 def send_reset_otp(email, otp):
-    api_key = os.getenv("RESEND_API_KEY", "").strip()
+    api_key = os.getenv("BREVO_API_KEY", "").strip()
 
     if not api_key:
-        raise HTTPException(503, "Resend API key is not configured.")
+        raise HTTPException(503, "Brevo API key is not configured.")
 
     try:
         response = requests.post(
-            "https://api.resend.com/emails",
+            "https://api.brevo.com/v3/smtp/email",
             headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
+                "api-key": api_key,
+                "Content-Type": "application/json",
+                "Accept": "application/json"
             },
             json={
-                "from": "HireMate AI <onboarding@resend.dev>",
-                "to": [email],
+                "sender": {
+                    "name": "HireMate AI",
+                    "email": "hirematee.ai@gmail.com"
+                },
+                "to": [{"email": email}],
                 "subject": "HireMate AI Password Reset Code",
-                "text": (
+                "textContent": (
                     f"Your HireMate AI password reset code is {otp}. "
                     "It expires in 10 minutes. "
                     "If you did not request this, ignore this email."
@@ -325,14 +329,13 @@ def send_reset_otp(email, otp):
             timeout=20
         )
 
-        if response.status_code not in (200, 201):
-            print("RESEND ERROR:", response.status_code, response.text, flush=True)
+        if response.status_code not in (200, 201, 202):
+            print("BREVO ERROR:", response.status_code, response.text, flush=True)
             raise HTTPException(502, "Could not send reset email.")
 
     except requests.RequestException as e:
-        print("RESEND CONNECTION ERROR:", str(e), flush=True)
+        print("BREVO CONNECTION ERROR:", str(e), flush=True)
         raise HTTPException(502, "Email service connection failed.")
-
 @app.post("/api/forgot-password")
 def forgot_password(data: dict):
     email = str(data.get("email", "")).strip().lower()
