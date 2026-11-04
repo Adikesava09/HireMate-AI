@@ -26,6 +26,7 @@ load_dotenv(BASE_DIR / ".env")
 DATABASE_URL = os.getenv("DATABASE_URL")
 ADZUNA_APP_ID = os.getenv("ADZUNA_APP_ID")
 ADZUNA_APP_KEY = os.getenv("ADZUNA_APP_KEY")
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
 
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is missing. Add it to your .env file.")
@@ -185,7 +186,109 @@ def login(data: dict):
         "user": {"id": user["id"], "name": user["name"], "email": user["email"]},
     }
 
+def create_login_session(user):
+    if user.get("status", "active") != "active":
+        raise HTTPException(403, "This account is blocked.")
 
+    token = secrets.token_urlsafe(32)
+
+    with connect_db() as con:
+        con.execute(
+            "INSERT INTO sessions (token, user_id) VALUES (%s, %s)",
+            (token, user["id"])
+        )
+        con.execute(
+            "UPDATE users SET last_login_at=CURRENT_TIMESTAMP WHERE id=%s",
+            (user["id"],)
+        )
+
+    return {
+        "message": "Login successful.",
+        "token": token,
+        "user": {
+            "id": user["id"],
+            "name": user["name"],
+            "email": user["email"],
+            "role": user.get("role", "user"),
+            "status": user.get("status", "active")
+        }
+    }
+
+
+@app.post("/api/auth/google")
+def google_login(data: dict):
+    credential = str(data.get("credential", "")).strip()
+
+    if not credential or not GOOGLE_CLIENT_ID:
+        raise HTTPException(503, "Google sign-in is not configured.")
+
+    try:
+        response = requests.get(
+            "https://oauth2.googleapis.com/tokeninfo",
+            params={"id_token": credential},
+            timeout=10
+        )
+        claims = response.json()
+
+        if (
+            response.status_code != 200
+            or claims.get("aud") != GOOGLE_CLIENT_ID
+            or claims.get("email_verified") not in (True, "true")
+        ):
+            raise ValueError("Invalid Google token")
+
+        google_sub = claims["sub"]
+        email = claims["email"].strip().lower()
+        name = claims.get("name") or email.split("@")[0]
+
+    except Exception:
+        raise HTTPException(
+            401,
+            "Google sign-in verification failed."
+        )
+
+    with connect_db() as con:
+        linked = con.execute(
+            "SELECT user_id FROM google_identities WHERE google_sub=%s",
+            (google_sub,)
+        ).fetchone()
+
+        if linked:
+            user = con.execute(
+                "SELECT * FROM users WHERE id=%s",
+                (linked["user_id"],)
+            ).fetchone()
+        else:
+            user = con.execute(
+                "SELECT * FROM users WHERE LOWER(email)=%s",
+                (email,)
+            ).fetchone()
+
+            if not user:
+                salt = secrets.token_hex(16)
+                fake_password = secrets.token_urlsafe(48)
+
+                user_id = con.execute(
+                    """INSERT INTO users
+                    (name,email,password_hash,salt,role)
+                    VALUES(%s,%s,%s,%s,'user')
+                    RETURNING id""",
+                    (name, email, hash_password(fake_password, salt))
+                ).fetchone()["id"]
+
+                user = con.execute(
+                    "SELECT * FROM users WHERE id=%s",
+                    (user_id,)
+                ).fetchone()
+
+            con.execute(
+                """INSERT INTO google_identities (google_sub,user_id)
+                VALUES(%s,%s)
+                ON CONFLICT(google_sub) DO NOTHING""",
+                (google_sub, user["id"])
+            )
+
+    return create_login_session(user)
 @app.get("/api/me")
 def me(token: str = ""):
     user = get_user_from_token(token)
