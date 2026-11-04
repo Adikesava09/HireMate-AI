@@ -321,7 +321,8 @@ def send_reset_otp(email, otp):
             server.starttls()
             server.login(SMTP_EMAIL, SMTP_APP_PASSWORD)
             server.send_message(message)
-    except Exception:
+    except Exception as e:
+        print("SMTP ERROR:", type(e).__name__, str(e), flush=True)
         raise HTTPException(
             502,
             "Could not send the reset email. Please try again later."
