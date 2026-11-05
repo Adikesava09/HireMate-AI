@@ -879,35 +879,43 @@ async function loadAdminDashboard() {
 /* BLOCK / UNBLOCK USER */
 
 async function changeUserStatus(userId, status) {
-  if (currentUser?.role !== "admin") {
-    alert("Admin access required.");
+  if (!adminToken) {
+    alert("Admin login required");
     return;
   }
 
   const action = status === "blocked" ? "block" : "unblock";
 
-  if (!confirm("Are you sure you want to " + action + " this user?")) {
+  if (!confirm(`Are you sure you want to ${action} this user?`)) {
     return;
   }
 
   try {
-    await api(
-      "/api/admin/users/" + encodeURIComponent(userId) +
-      "/status?token=" + encodeURIComponent(authToken),
+    const response = await fetch(
+      `${API_URL}/api/admin/users/${userId}/status?token=${encodeURIComponent(adminToken)}`,
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({status: status})
+        body: JSON.stringify({ status: status })
       }
     );
 
-    alert("User " + action + "ed successfully.");
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error("Status update error:", response.status, result);
+      alert(`Error ${response.status}: ${result.detail || JSON.stringify(result)}`);
+      return;
+    }
+
+    alert(result.message || "User status updated successfully");
     await loadAdminDashboard();
 
   } catch (error) {
-    alert("Admin error: " + error.message);
+    console.error(error);
+    alert("Server connection error");
   }
 }
 /* PROFILE */
