@@ -317,7 +317,7 @@ th,td{text-align:left;padding:14px 10px;border-bottom:1px solid var(--border)}
       </div>
       <div class="field">
        <label>Job Title</label>
-       <input id="jobTitle" placeholder="SOC Analyst" required>
+       <input id="jobTitle" placeholder="SOC Analyst">
       </div>
       <div class="field">
        <label>Job Description</label>
@@ -784,6 +784,7 @@ $("atsForm").addEventListener("submit", async event => {
   event.preventDefault();
 
   const file = $("resumeFile").files[0];
+
   if (!file) {
     alert("Please upload your resume.");
     return;
@@ -802,19 +803,49 @@ $("atsForm").addEventListener("submit", async event => {
       body: formData
     });
 
-    const score = data.keyword_match_score ?? 0;
+    const score = Number(
+      data.keyword_score ?? data.score ?? data.ats_score ?? 0
+    );
+    console.log("ATS API RESPONSE:", data);
+
+    const matched = data.matched_skills || [];
+    const missing = data.missing_skills || [];
+    const detected = data.detected_skills || [];
+
+    // Save resume skills for job recommendations
+    const resumeSkills = [...new Set([...matched, ...detected])];
+
+    localStorage.setItem(
+      "hm_ats_skills",
+      JSON.stringify(resumeSkills)
+    );
 
     $("statATS").textContent = score + "%";
 
     $("atsResult").innerHTML = `
       <h3>ATS Analysis Result</h3>
       <h2>${escapeHTML(score)}%</h2>
-      <p>${escapeHTML(data.assessment || "")}</p>
+
+      <p>${escapeHTML(data.assessment || data.note || "Analysis completed.")}</p>
+
       <p><b>Matched Skills:</b>
-      ${escapeHTML((data.matched_skills || []).join(", "))}</p>
+      ${escapeHTML(matched.join(", ") || "None")}</p>
+
       <p><b>Missing Skills:</b>
-      ${escapeHTML((data.missing_skills || []).join(", "))}</p>
+      ${escapeHTML(missing.join(", ") || "None")}</p>
+
+      <p><b>Detected Skills:</b>
+      ${escapeHTML(detected.join(", ") || "None")}</p>
+
+      <button class="btn" id="showRecommendedJobs">
+        Show Recommended Jobs
+      </button>
     `;
+
+    $("showRecommendedJobs").addEventListener("click", () => {
+      showPage("recommended");
+      renderRecommended();
+    });
 
   } catch (error) {
     $("atsResult").textContent = error.message;
