@@ -895,20 +895,21 @@ async function changeUserStatus(userId, status) {
       "/api/admin/users/" + encodeURIComponent(userId) +
       "/status?token=" + encodeURIComponent(authToken),
       {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({status})
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({status: status})
       }
     );
 
-    alert("User status updated.");
+    alert("User " + action + "ed successfully.");
     await loadAdminDashboard();
 
   } catch (error) {
-    alert(error.message);
+    alert("Admin error: " + error.message);
   }
 }
-
 /* PROFILE */
 
 $("profileForm").addEventListener("submit", event => {
