@@ -830,42 +830,43 @@ async function loadAdminDashboard() {
 
   try {
     const [overview, usersData] = await Promise.all([
-      api("/api/admin/overview?token=" + encodeURIComponent(authToken)),
+      api("/api/admin/stats?token=" + encodeURIComponent(authToken)),
       api("/api/admin/users?token=" + encodeURIComponent(authToken))
     ]);
 
+    const stats = overview.users || overview;
+    const ats = overview.ats || overview;
     const users = usersData.users || [];
-    const stats = overview.users || {};
-    const ats = overview.ats || {};
 
-    $("adminTotalUsers").textContent = stats.total_users ?? users.length;
-    $("adminActiveUsers").textContent = stats.active_users ?? "—";
-    $("adminBlockedUsers").textContent = stats.blocked_users ?? "—";
-    $("adminAtsCount").textContent = ats.total_analyses ?? "—";
+    $("adminTotalUsers").textContent =
+      stats.total_users ?? stats.total ?? "—";
 
-    $("adminUsersRows").innerHTML = users.map(user => {
-      const blocked = user.status === "blocked";
+    $("adminActiveUsers").textContent =
+      stats.active_users ?? stats.active ?? "—";
 
-      return `
-        <tr>
-          <td>${escapeHTML(user.name || "")}</td>
-          <td>${escapeHTML(user.email || "")}</td>
-          <td>${escapeHTML(user.role || "user")}</td>
-          <td>${escapeHTML(user.status || "active")}</td>
-          <td>
-            ${
-              user.role === "admin"
-              ? "Admin account"
-              : `<button class="btn"
-                  onclick="changeUserStatus('${escapeHTML(user.id)}',
-                  '${blocked ? "active" : "blocked"}')">
-                  ${blocked ? "Unblock" : "Block"}
-                </button>`
-            }
-          </td>
-        </tr>
-      `;
-    }).join("");
+    $("adminBlockedUsers").textContent =
+      stats.blocked_users ?? stats.blocked ?? "—";
+
+    $("adminAtsCount").textContent =
+      ats.total_analyses ?? ats.total_ats_analyses ?? "—";
+
+    $("adminUsersRows").innerHTML = users.map(user => `
+      <tr>
+        <td>${escapeHTML(user.name || "")}</td>
+        <td>${escapeHTML(user.email || "")}</td>
+        <td>${escapeHTML(user.role || "user")}</td>
+        <td>${escapeHTML(user.status || "active")}</td>
+        <td>
+          ${user.role === "admin" ? "Admin account" : `
+            <button class="btn"
+              onclick="changeUserStatus('${escapeHTML(user.id)}',
+              '${user.status === "blocked" ? "active" : "blocked"}')">
+              ${user.status === "blocked" ? "Unblock" : "Block"}
+            </button>
+          `}
+        </td>
+      </tr>
+    `).join("");
 
     $("adminMessage").textContent = "";
 
