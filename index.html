@@ -630,19 +630,38 @@ function enterApp(user) {
 }
 
 async function restoreSession() {
-  if (!authToken) {
-    $("authOverlay").style.display = "grid";
-    return;
-  }
+  $("mainApp").style.display = "none";
+  $("authOverlay").style.display = "grid";
+  $("adminNav").style.display = "none";
+
+  if (!authToken) return;
 
   try {
-    await loadCurrentUser();
-  } catch {
+    const data = await api(
+      "/api/me?token=" + encodeURIComponent(authToken)
+    );
+
+    const user = data.user;
+
+    if (!user || user.role !== "admin" && user.role !== "user") {
+      throw new Error("Invalid user session");
+    }
+
+    if (user.status === "blocked") {
+      throw new Error("Your account is blocked");
+    }
+
+    currentUser = user;
+    enterApp(user);
+
+  } catch (error) {
     authToken = "";
     currentUser = null;
     localStorage.removeItem("hiremate_token");
+
     $("mainApp").style.display = "none";
     $("authOverlay").style.display = "grid";
+    $("adminNav").style.display = "none";
   }
 }
 
@@ -672,9 +691,12 @@ $("logoutBtn").addEventListener("click", async () => {
 /* PAGE NAVIGATION */
 
 function showPage(page) {
-  if (page === "admin" && currentUser?.role !== "admin") {
-    alert("Admin access required.");
-    return;
+  if (page === "admin") {
+    if (!authToken || !currentUser || currentUser.role !== "admin") {
+      alert("Admin access denied. Please login as Admin.");
+      showPage("dashboard");
+      return;
+    }
   }
 
   document.querySelectorAll(".page").forEach(section => {
@@ -701,7 +723,6 @@ function showPage(page) {
 
   if (page === "admin") loadAdminDashboard();
 }
-
 document.querySelectorAll(".nav-item[data-page]").forEach(button => {
   button.addEventListener("click", () => {
     showPage(button.dataset.page);
