@@ -1691,7 +1691,8 @@ display:flex;align-items:center;justify-content:center;padding:20px">
       );
 
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json()
+        console.log("HIREMATE USER ROLE:", data.user?.role);
         overlay.style.display = "none";
 
         if (data.user?.name) {
