@@ -822,7 +822,23 @@ $("atsForm").addEventListener("submit", async event => {
 });
 
 /* ADMIN DASHBOARD */
+async function setAccountStatus(id, status) {
+  if (!confirm(`Are you sure you want to ${status} this account?`)) {
+    return;
+  }
 
+  try {
+    await adminFetch(`/api/admin/users/${id}/status`, {
+      method: "POST",
+      body: JSON.stringify({ status: status })
+    });
+
+    await loadAdminDashboard();
+    alert(`User ${status} successfully.`);
+  } catch (error) {
+    document.getElementById("adminMessage").textContent = error.message;
+  }
+}
 async function loadAdminDashboard() {
   if (currentUser?.role !== "admin") return;
 
