@@ -1622,5 +1622,146 @@ $("trackerForm").addEventListener("submit", event => {
 setAuthMode("login");
 restoreSession();
 </script>
+  <!-- HireMate AI Login / Signup -->
+<div id="hmAuth" style="
+position:fixed;inset:0;z-index:99999;background:#f5f7fc;
+display:flex;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;padding:28px;border-radius:16px;
+  width:100%;max-width:400px;box-shadow:0 8px 35px #0001">
+    <h2 style="color:#635bff;text-align:center">HireMate AI</h2>
+    <p style="text-align:center;color:#777">Your career starts here</p>
+
+    <div id="hmSignupFields" style="display:none">
+      <input id="hmName" placeholder="Full name"
+        style="width:100%;padding:12px;margin:7px 0">
+    </div>
+
+    <input id="hmEmail" type="email" placeholder="Email address"
+      style="width:100%;padding:12px;margin:7px 0">
+    <input id="hmPassword" type="password" placeholder="Password"
+      style="width:100%;padding:12px;margin:7px 0">
+
+    <button id="hmSubmit" class="btn" style="width:100%;margin-top:12px">
+      Login
+    </button>
+
+    <p style="text-align:center;font-size:14px">
+      <span id="hmSwitchText">New user?</span>
+      <button id="hmSwitch" type="button"
+        style="border:0;background:none;color:#635bff">Create account</button>
+    </p>
+
+    <p id="hmMessage" style="font-size:13px;text-align:center"></p>
+  </div>
+</div>
+
+<script>
+(() => {
+  const API = "https://hiremate-ai-quvs.onrender.com";
+  const overlay = document.getElementById("hmAuth");
+  const signupFields = document.getElementById("hmSignupFields");
+  const submit = document.getElementById("hmSubmit");
+  const message = document.getElementById("hmMessage");
+
+  let signupMode = false;
+
+  function showMessage(text, color = "#d94343") {
+    message.textContent = text;
+    message.style.color = color;
+  }
+
+  document.getElementById("hmSwitch").addEventListener("click", () => {
+    signupMode = !signupMode;
+    signupFields.style.display = signupMode ? "block" : "none";
+    submit.textContent = signupMode ? "Create Account" : "Login";
+    document.getElementById("hmSwitchText").textContent =
+      signupMode ? "Already registered?" : "New user?";
+    document.getElementById("hmSwitch").textContent =
+      signupMode ? "Login" : "Create account";
+    showMessage("");
+  });
+
+  async function verifySession() {
+    const token = localStorage.getItem("hiremate_token");
+    if (!token) return;
+
+    try {
+      const response = await fetch(
+        `${API}/api/me?token=${encodeURIComponent(token)}`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        overlay.style.display = "none";
+
+        if (data.user?.name) {
+          document.getElementById("topName").textContent = data.user.name;
+          document.getElementById("avatar").textContent =
+            data.user.name.charAt(0).toUpperCase();
+        }
+
+        if (data.user?.role === "admin") {
+          document.getElementById("adminNav").style.display = "block";
+        }
+      } else {
+        localStorage.removeItem("hiremate_token");
+      }
+    } catch (error) {
+      showMessage("Server connection failed. Try again.");
+    }
+  }
+
+  submit.addEventListener("click", async () => {
+    const email = document.getElementById("hmEmail").value.trim();
+    const password = document.getElementById("hmPassword").value;
+    const name = document.getElementById("hmName").value.trim();
+
+    if (!email || !password || (signupMode && !name)) {
+      showMessage("Please fill in all required fields.");
+      return;
+    }
+
+    submit.disabled = true;
+    submit.textContent = "Please wait...";
+    showMessage("");
+
+    try {
+      const endpoint = signupMode ? "/api/signup" : "/api/login";
+      const body = signupMode
+        ? { name, email, password }
+        : { email, password };
+
+      const response = await fetch(API + endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Authentication failed.");
+      }
+
+      const token = data.token || data.access_token;
+      if (!token) {
+        throw new Error("Login response did not contain a session token.");
+      }
+
+      localStorage.setItem("hiremate_token", token);
+      showMessage("Login successful!", "#159b70");
+      await verifySession();
+
+    } catch (error) {
+      showMessage(error.message);
+    } finally {
+      submit.disabled = false;
+      submit.textContent = signupMode ? "Create Account" : "Login";
+    }
+  });
+
+  verifySession();
+})();
+</script>
 </body>
 </html>
