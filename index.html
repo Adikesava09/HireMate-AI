@@ -3,892 +3,521 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HireMate AI</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<title>HireMate AI | Career Dashboard</title>
+
 <style>
 :root {
-  --primary: #6254e8;
-  --primary-dark: #493bc7;
-  --bg: #f5f6fc;
-  --card: #ffffff;
-  --text: #20233a;
-  --muted: #72758b;
-  --border: #e5e7f0;
-  --green: #138a54;
-  --red: #cf3f52;
+  --bg:#f5f7fc;
+  --sidebar:#11182b;
+  --primary:#635bff;
+  --text:#202943;
+  --muted:#7a849e;
+  --border:#e6eaf2;
+  --white:#fff;
+  --green:#159b70;
 }
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: var(--bg);
-  color: var(--text);
+*{box-sizing:border-box;font-family:Arial,sans-serif}
+body{margin:0;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{display:flex;min-height:100vh}
+.sidebar{width:245px;background:var(--sidebar);color:white;padding:25px 15px;position:fixed;height:100vh;overflow:auto}
+.logo{font-size:23px;font-weight:800;padding:5px 12px 35px}
+.logo span{color:#928cff}
+.nav-label{color:#7d89a8;font-size:11px;padding:10px 12px}
+.nav-item{display:block;width:100%;text-align:left;color:#aeb8d0;background:transparent;border:0;padding:13px 14px;margin:4px 0;border-radius:9px}
+.nav-item:hover,.nav-item.active{color:white;background:#292f51}
+.main{margin-left:245px;width:calc(100% - 245px)}
+.topbar{background:white;border-bottom:1px solid var(--border);padding:20px 35px;display:flex;justify-content:space-between;align-items:center}
+.content{padding:32px 35px;max-width:1500px;margin:auto}
+.page{display:none}
+.page.active{display:block}
+.welcome{background:linear-gradient(120deg,#635bff,#8d69ed);color:white;border-radius:18px;padding:32px;margin-bottom:25px}
+.welcome h1{margin:0 0 12px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-bottom:28px}
+.stat-card,.card{background:white;border:1px solid var(--border);border-radius:13px;padding:22px}
+.stat-card h2{font-size:28px}
+.btn{border:0;border-radius:8px;padding:12px 17px;background:var(--primary);color:white;font-weight:600;margin:3px}
+.btn-outline{background:white;border:1px solid var(--border);color:var(--text)}
+.field{margin-bottom:18px}
+label{display:block;font-size:13px;font-weight:600;margin-bottom:8px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #dfe4ee;border-radius:8px}
+textarea{min-height:110px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:14px 10px;border-bottom:1px solid var(--border)}
+.auth-overlay{position:fixed;inset:0;z-index:9999;background:#f5f7fc;display:grid;place-items:center;padding:18px}
+.auth-card{width:min(100%,420px);background:white;border:1px solid var(--border);border-radius:16px;padding:28px}
+.auth-card h1{margin:0 0 8px}
+.auth-card p{color:var(--muted);font-size:13px;line-height:1.6}
+.auth-card .btn{width:100%;margin:8px 0}
+.auth-links{display:flex;justify-content:space-between;margin-top:15px}
+.auth-links button{border:0;background:none;color:var(--primary)}
+.auth-error{color:#b42318;background:#fff0ef;padding:10px;display:none;margin:12px 0}
+#logoutBtn{border:1px solid var(--border);background:white;padding:9px 12px;border-radius:8px}
+@media(max-width:900px){
+ .stats{grid-template-columns:repeat(2,1fr)}
+ .sidebar{width:200px}
+ .main{margin-left:200px;width:calc(100% - 200px)}
 }
-button, input, textarea, select { font: inherit; }
-button { cursor: pointer; }
-.hidden { display: none !important; }
-.muted { color: var(--muted); }
-.small { font-size: 13px; }
-button:disabled { opacity: .55; cursor: not-allowed; }
-
-.btn {
-  border: 0;
-  border-radius: 9px;
-  padding: 11px 16px;
-  background: var(--primary);
-  color: white;
-  font-weight: 600;
-}
-.btn:hover { background: var(--primary-dark); }
-.btn.secondary {
-  background: #eeedff;
-  color: var(--primary);
-}
-.btn.danger { background: #ffe8ec; color: var(--red); }
-.btn.outline {
-  border: 1px solid var(--border);
-  color: var(--text);
-  background: white;
-}
-input, textarea, select {
-  width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  padding: 12px;
-  margin-top: 6px;
-  background: white;
-  color: var(--text);
-}
-textarea { resize: vertical; min-height: 90px; }
-label { display: block; font-size: 14px; font-weight: 600; margin-top: 14px; }
-form button { margin-top: 18px; }
-h1 { font-size: 27px; margin: 0 0 8px; }
-h2 { font-size: 19px; margin-top: 0; }
-h3 { font-size: 16px; }
-p { line-height: 1.5; }
-
-.auth-screen {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.auth-card {
-  width: 100%;
-  max-width: 420px;
-  background: white;
-  padding: 30px;
-  border-radius: 18px;
-  box-shadow: 0 12px 45px #20233a12;
-}
-.brand { color: var(--primary); font-weight: 800; font-size: 24px; }
-.auth-card .btn { width: 100%; }
-.message { margin-top: 12px; font-size: 14px; color: var(--red); }
-.success { color: var(--green); }
-
-.layout { min-height: 100vh; display: flex; }
-.sidebar {
-  width: 245px;
-  background: white;
-  border-right: 1px solid var(--border);
-  padding: 22px 15px;
-  flex-shrink: 0;
-}
-.logo { padding: 0 12px 25px; }
-.nav-button {
-  width: 100%;
-  text-align: left;
-  border: 0;
-  padding: 12px;
-  margin: 3px 0;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--muted);
-}
-.nav-button.active, .nav-button:hover {
-  background: #efedff;
-  color: var(--primary);
-}
-.sidebar-bottom { margin-top: 25px; border-top: 1px solid var(--border); padding-top: 15px; }
-.main { min-width: 0; flex: 1; padding: 26px; }
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
-  flex-wrap: wrap;
-  margin-bottom: 25px;
-}
-.page { max-width: 1150px; margin: auto; }
-.subtitle { color: var(--muted); margin-top: 5px; }
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-.grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.card {
-  background: var(--card);
-  padding: 22px;
-  border: 1px solid var(--border);
-  border-radius: 15px;
-  min-width: 0;
-  margin-bottom: 18px;
-}
-.stat { font-size: 30px; font-weight: 800; margin: 12px 0; }
-.stat-label { color: var(--muted); font-size: 13px; }
-.progress {
-  width: 100%;
-  height: 9px;
-  background: #ececf4;
-  border-radius: 20px;
-  overflow: hidden;
-  margin: 10px 0;
-}
-.progress div {
-  height: 100%;
-  width: 0;
-  background: var(--primary);
-  transition: width .3s;
-}
-.pills { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0; }
-.pill {
-  display: inline-block;
-  border-radius: 20px;
-  background: #eeedff;
-  color: #5143c9;
-  padding: 6px 10px;
-  font-size: 12px;
-}
-.pill.green { background: #e1f7eb; color: #087843; }
-.pill.red { background: #ffe9ed; color: #b92b43; }
-.result-box {
-  background: #f8f8ff;
-  border-radius: 10px;
-  padding: 15px;
-  margin-top: 14px;
-  overflow-wrap: anywhere;
-}
-.list { padding-left: 20px; line-height: 1.8; }
-.job-card {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 17px;
-  margin: 12px 0;
-  background: white;
-}
-.job-card p { color: var(--muted); font-size: 14px; }
-.row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.row > * { min-width: 0; }
-.row .grow { flex: 1; }
-.preview {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 25px;
-  overflow-wrap: anywhere;
-}
-.preview h2 { color: var(--primary); margin-bottom: 5px; }
-.preview h3 {
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 6px;
-  margin-top: 22px;
-}
-.tracker-item {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 14px;
-  margin: 10px 0;
-}
-.footer-note {
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.5;
-  margin-top: 15px;
-}
-.menu-toggle { display: none; }
-@media(max-width:900px) {
-  .sidebar { width: 205px; }
-  .grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media(max-width:650px) {
-  .layout { display: block; }
-  .sidebar { width: 100%; padding: 12px; border-right: 0; border-bottom: 1px solid var(--border); }
-  .logo { padding: 5px 8px 12px; }
-  .nav-list { display: flex; overflow-x: auto; gap: 5px; padding-bottom: 4px; }
-  .nav-button { width: auto; white-space: nowrap; flex-shrink: 0; }
-  .sidebar-bottom { margin-top: 8px; padding-top: 8px; }
-  .main { padding: 17px; }
-  .grid, .grid.three { grid-template-columns: 1fr; }
-  h1 { font-size: 23px; }
-  .card { padding: 17px; }
-}
-@media print {
-  body * { visibility: hidden !important; }
-  #resumePreview, #resumePreview * { visibility: visible !important; }
-  #resumePreview {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    border: none;
-  }
+@media(max-width:650px){
+ .sidebar{display:none}
+ .main{margin:0;width:100%}
+ .topbar{padding:15px}
+ .content{padding:18px 12px}
+ .stats{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
+
 <body>
 
 <!-- LOGIN / SIGNUP -->
-<div id="authScreen" class="auth-screen">
-  <div class="auth-card">
-    <div class="brand">HireMate AI</div>
-    <p class="muted">Your AI-powered career companion</p>
+<div class="auth-overlay" id="authOverlay">
+ <div class="auth-card">
 
-    <form id="loginForm">
-      <h2>Welcome back</h2>
-      <label>Email
-        <input id="loginEmail" type="email" required autocomplete="email">
-      </label>
-      <label>Password
-        <input id="loginPassword" type="password" required autocomplete="current-password">
-      </label>
-      <button class="btn" type="submit">Login</button>
-      <div id="loginMessage" class="message" aria-live="polite"></div>
-
-      <p class="small">
-        <button class="btn secondary" id="forgotLink" type="button">Forgot Password?</button>
-      </p>
-
-      <div id="googleButton" style="margin-top:15px"></div>
-
-      <p class="small">New here?
-        <button class="btn secondary" id="showSignup" type="button">Create account</button>
-      </p>
-    </form>
-
-    <form id="signupForm" class="hidden">
-      <h2>Create your account</h2>
-      <label>Full name
-        <input id="signupName" required autocomplete="name">
-      </label>
-      <label>Email
-        <input id="signupEmail" type="email" required autocomplete="email">
-      </label>
-      <label>Password (minimum 8 characters)
-        <input id="signupPassword" type="password" minlength="8" required autocomplete="new-password">
-      </label>
-      <button class="btn" type="submit">Sign up</button>
-      <div id="signupMessage" class="message" aria-live="polite"></div>
-      <p class="small">Already registered?
-        <button class="btn secondary" id="showLogin" type="button">Login</button>
-      </p>
-    </form>
-
-    <form id="forgotForm" class="hidden">
-      <h2>Forgot Password</h2>
-      <p class="muted small">Enter your registered email to receive an OTP.</p>
-      <label>Email
-        <input id="forgotEmail" type="email" required>
-      </label>
-      <button class="btn" type="submit">Send OTP</button>
-      <div id="forgotMessage" class="message" aria-live="polite"></div>
-      <p class="small">
-        <button class="btn secondary" id="backToLogin1" type="button">Back to Login</button>
-      </p>
-    </form>
-
-    <form id="resetForm" class="hidden">
-      <h2>Verify OTP & Reset Password</h2>
-      <label>Registered Email
-        <input id="resetEmail" type="email" required>
-      </label>
-      <label>6-digit OTP
-        <input id="resetOtp" type="text" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required>
-      </label>
-      <label>New Password
-        <input id="newPassword" type="password" minlength="8" required>
-      </label>
-      <label>Confirm Password
-        <input id="confirmPassword" type="password" minlength="8" required>
-      </label>
-      <button class="btn" type="submit">Reset Password</button>
-      <div id="resetMessage" class="message" aria-live="polite"></div>
-      <p class="small">
-        <button class="btn secondary" id="backToLogin2" type="button">Back to Login</button>
-      </p>
-    </form>
+  <div class="logo" style="padding:0 0 18px;color:#202943">
+   HireMate <span>AI</span>
   </div>
+
+  <section id="loginPanel">
+   <h1>Welcome back</h1>
+   <p>Sign in to continue.</p>
+
+   <form id="loginForm">
+    <div class="field">
+     <label>Email</label>
+     <input id="loginEmail" type="email" required>
+    </div>
+
+    <div class="field">
+     <label>Password</label>
+     <input id="loginPassword" type="password" required>
+    </div>
+
+    <div class="auth-error" id="loginError"></div>
+    <button class="btn" type="submit" id="loginSubmit">Login</button>
+   </form>
+
+   <div class="auth-links">
+    <button type="button" id="showSignup">Create account</button>
+    <button type="button" id="showForgot">Forgot password?</button>
+   </div>
+  </section>
+
+  <section id="signupPanel" style="display:none">
+   <h1>Create account</h1>
+   <p>Register your account.</p>
+
+   <form id="signupForm">
+    <div class="field">
+     <label>Full Name</label>
+     <input id="signupName" required>
+    </div>
+
+    <div class="field">
+     <label>Email</label>
+     <input id="signupEmail" type="email" required>
+    </div>
+
+    <div class="field">
+     <label>Password</label>
+     <input id="signupPassword" type="password" minlength="8" required>
+    </div>
+
+    <div class="auth-error" id="signupError"></div>
+    <button class="btn" type="submit" id="signupSubmit">Create Account</button>
+   </form>
+
+   <div class="auth-links">
+    <button type="button" id="showLoginFromSignup">Back to Login</button>
+   </div>
+  </section>
+
+  <section id="forgotPanel" style="display:none">
+   <h1>Reset Password</h1>
+   <p>Enter your registered email to receive an OTP.</p>
+
+   <form id="forgotForm">
+    <div class="field">
+     <label>Email</label>
+     <input id="forgotEmail" type="email" required>
+    </div>
+    <div class="auth-error" id="forgotError"></div>
+    <button class="btn" type="submit">Send OTP</button>
+   </form>
+
+   <form id="resetForm" style="display:none;margin-top:18px">
+    <div class="field">
+     <label>OTP</label>
+     <input id="resetOtp" maxlength="6" required>
+    </div>
+    <div class="field">
+     <label>New Password</label>
+     <input id="resetPassword" type="password" minlength="8" required>
+    </div>
+    <div class="auth-error" id="resetError"></div>
+    <button class="btn" type="submit">Reset Password</button>
+   </form>
+
+   <div class="auth-links">
+    <button type="button" id="showLoginFromForgot">Back to Login</button>
+   </div>
+  </section>
+
+ </div>
 </div>
 
 <!-- MAIN APPLICATION -->
-<div id="appScreen" class="layout hidden">
-  <aside class="sidebar">
-    <div class="logo">
-      <div class="brand">HireMate AI</div>
-      <div class="small muted">Career workspace</div>
+<div class="app" id="mainApp" style="display:none">
+
+ <aside class="sidebar" id="sidebar">
+  <div class="logo">HireMate <span>AI</span></div>
+
+  <div class="nav-label">MAIN MENU</div>
+
+  <button class="nav-item active" data-page="dashboard">Dashboard</button>
+  <button class="nav-item" data-page="resume">Resume Builder</button>
+  <button class="nav-item" data-page="ats">ATS Resume Analyzer</button>
+  <button class="nav-item" data-page="suggestions">AI Suggestions</button>
+  <button class="nav-item" data-page="recommended">Recommended Jobs</button>
+  <button class="nav-item" data-page="jobs">Job Search</button>
+  <button class="nav-item" data-page="tracker">Application Tracker</button>
+
+  <button class="nav-item" id="adminNav" data-page="admin" style="display:none">
+   Admin Dashboard
+  </button>
+
+  <div class="nav-label">ACCOUNT</div>
+  <button class="nav-item" data-page="profile">My Profile</button>
+  <button class="nav-item" data-page="settings">Settings</button>
+ </aside>
+
+ <main class="main">
+
+  <header class="topbar">
+   <div>
+    <h2 id="pageTitle">Dashboard</h2>
+    <small id="pageSubtitle">Your career overview</small>
+   </div>
+
+   <div>
+    <span id="topName">User</span>
+    <span id="topRole"></span>
+    <button id="logoutBtn">Logout</button>
+   </div>
+  </header>
+
+  <div class="content">
+
+   <!-- USER DASHBOARD -->
+   <section class="page active" id="page-dashboard">
+    <div class="welcome">
+     <h1>Welcome to HireMate AI</h1>
+     <p>Your AI-powered career assistant.</p>
+     <button class="btn" data-go="resume">Build Resume</button>
+     <button class="btn" data-go="ats">Check ATS Score</button>
     </div>
 
-    <nav class="nav-list" aria-label="Main navigation">
-      <button class="nav-button active" data-page="dashboard">⌂ Dashboard</button>
-      <button class="nav-button" data-page="resume">▤ Resume Builder</button>
-      <button class="nav-button" data-page="ats">✓ ATS Checker</button>
-      <button class="nav-button" data-page="job-match">⌕ Job Description Checker</button>
-      <button class="nav-button" data-page="jobs">☆ Recommended Jobs</button>
-      <button class="nav-button" data-page="tracker">▣ Application Tracker</button>
-      <button class="nav-button" data-page="profile">♙ Profile</button>
-    </nav>
-
-    <div class="sidebar-bottom">
-      <div id="sidebarUser" class="small"></div>
-      <button class="btn outline" id="logoutButton" type="button" style="width:100%;margin-top:12px">Logout</button>
+    <div class="stats">
+     <div class="stat-card">
+      <p>Resume Created</p>
+      <h2 id="statResume">0</h2>
+     </div>
+     <div class="stat-card">
+      <p>ATS Score</p>
+      <h2 id="statATS">0</h2>
+     </div>
+     <div class="stat-card">
+      <p>Saved Jobs</p>
+      <h2 id="statSaved">0</h2>
+     </div>
+     <div class="stat-card">
+      <p>Applications</p>
+      <h2 id="statApplied">0</h2>
+     </div>
     </div>
-  </aside>
+   </section>
 
-  <main class="main">
-    <div class="topbar">
-      <div>
-        <h1 id="pageHeading">Dashboard</h1>
-        <div class="subtitle">Build your career, one step at a time.</div>
+   <!-- RESUME BUILDER -->
+   <section class="page" id="page-resume">
+    <div class="card">
+     <h2>Resume Builder</h2>
+
+     <form id="resumeForm">
+      <div class="field">
+       <label>Full Name</label>
+       <input id="rName" required>
       </div>
-      <div class="small muted">HireMate AI · Local workspace</div>
+
+      <div class="field">
+       <label>Email</label>
+       <input id="rEmail" type="email">
+      </div>
+
+      <div class="field">
+       <label>Phone</label>
+       <input id="rPhone">
+      </div>
+
+      <div class="field">
+       <label>Location</label>
+       <input id="rLocation">
+      </div>
+
+      <div class="field">
+       <label>Professional Summary</label>
+       <textarea id="rSummary"></textarea>
+      </div>
+
+      <div class="field">
+       <label>Education</label>
+       <textarea id="rEducation"></textarea>
+      </div>
+
+      <div class="field">
+       <label>Technical Skills</label>
+       <textarea id="rSkills"></textarea>
+      </div>
+
+      <div class="field">
+       <label>Projects</label>
+       <textarea id="rProjects"></textarea>
+      </div>
+
+      <div class="field">
+       <label>Experience / Internships</label>
+       <textarea id="rExperience"></textarea>
+      </div>
+
+      <div class="field">
+       <label>Certifications</label>
+       <textarea id="rCertifications"></textarea>
+      </div>
+
+      <button class="btn" type="submit">Generate Resume</button>
+     </form>
+
+     <div id="resumePreview" style="display:none">
+      <hr>
+      <div id="resumeContent"></div>
+      <button class="btn" onclick="window.print()">Print / Save PDF</button>
+     </div>
     </div>
+   </section>
 
-    <!-- DASHBOARD -->
-    <section id="page-dashboard" class="page">
-      <div class="card">
-        <h2 id="welcomeText">Welcome!</h2>
-        <p>Manage your resume, check job matches, discover relevant roles and track applications.</p>
+   <!-- ATS ANALYZER -->
+   <section class="page" id="page-ats">
+    <div class="card">
+     <h2>ATS Resume Analyzer</h2>
+     <form id="atsForm">
+      <div class="field">
+       <label>Upload Resume (PDF / DOCX)</label>
+       <input type="file" id="resumeFile" accept=".pdf,.docx" required>
       </div>
-
-      <div class="grid three">
-        <div class="card">
-          <div class="stat-label">Feature 1</div>
-          <h2>Resume Builder</h2>
-          <p class="muted">Create and print a professional resume.</p>
-          <button class="btn" data-go="resume">Build Resume</button>
-        </div>
-        <div class="card">
-          <div class="stat-label">Feature 2</div>
-          <h2>ATS Checker</h2>
-          <p class="muted">Review resume structure and job keywords.</p>
-          <button class="btn" data-go="ats">Check Resume</button>
-        </div>
-        <div class="card">
-          <div class="stat-label">Feature 3</div>
-          <h2>Job Description Checker</h2>
-          <p class="muted">Compare a resume with different job descriptions.</p>
-          <button class="btn" data-go="job-match">Check Job Match</button>
-        </div>
-        <div class="card">
-          <div class="stat-label">Feature 4</div>
-          <h2>Smart Job Recommendations</h2>
-          <p class="muted">Explore sample roles based on your skills.</p>
-          <button class="btn" data-go="jobs">Explore Jobs</button>
-        </div>
-        <div class="card">
-          <div class="stat-label">Feature 5</div>
-          <h2>Application Tracker</h2>
-          <p class="muted">Record companies, dates and application status.</p>
-          <button class="btn" data-go="tracker">Track Applications</button>
-        </div>
-        <div class="card">
-          <h2>Profile</h2>
-          <p class="muted">Save your skills to improve job recommendations.</p>
-          <button class="btn" data-go="profile">Update Profile</button>
-        </div>
+      <div class="field">
+       <label>Job Title</label>
+       <input id="jobTitle" placeholder="SOC Analyst" required>
       </div>
-      <p class="footer-note">Scores are rule-based estimates, not official ATS results or guarantees of getting a job. Recommended roles are examples, not verified live vacancies.</p>
-    </section>
-
-    <!-- RESUME BUILDER -->
-    <section id="page-resume" class="page hidden">
-      <div class="card">
-        <h2>Resume Builder</h2>
-        <p class="muted">Enter accurate details. You can preview and save your resume as PDF using your browser's Print dialog.</p>
-
-        <form id="resumeForm">
-          <div class="grid">
-            <label>Full name
-              <input id="rName" required>
-            </label>
-            <label>Email
-              <input id="rEmail" type="email">
-            </label>
-            <label>Phone
-              <input id="rPhone">
-            </label>
-            <label>Location
-              <input id="rLocation" placeholder="City, State">
-            </label>
-          </div>
-
-          <label>Target job role
-            <input id="rRole" placeholder="SOC Analyst L1">
-          </label>
-          <label>Professional summary
-            <textarea id="rSummary" placeholder="Briefly describe your skills, education and goals."></textarea>
-          </label>
-          <label>Skills (comma-separated)
-            <textarea id="rSkills" placeholder="Networking, Linux, SIEM, Splunk"></textarea>
-          </label>
-          <label>Education
-            <textarea id="rEducation" placeholder="Degree, college, graduation year"></textarea>
-          </label>
-          <label>Projects
-            <textarea id="rProjects" placeholder="Project name, tools used, what you built"></textarea>
-          </label>
-          <label>Experience / internships
-            <textarea id="rExperience" placeholder="Internship, role, dates, responsibilities"></textarea>
-          </label>
-
-          <div class="row">
-            <button class="btn" type="submit">Save & Preview</button>
-            <button class="btn secondary" id="printResume" type="button">Print / Save PDF</button>
-          </div>
-          <p id="resumeMessage" class="message" aria-live="polite"></p>
-        </form>
+      <div class="field">
+       <label>Job Description</label>
+       <textarea id="jobDescription"></textarea>
       </div>
+      <button class="btn" type="submit">Analyze Resume</button>
+     </form>
+     <div id="atsResult"></div>
+    </div>
+   </section>
 
-      <div id="resumePreview" class="preview">
-        <h2 id="pName">Your Name</h2>
-        <div id="pContact" class="muted">Email · Phone · Location</div>
-        <h3 id="pRole">Professional Profile</h3>
-        <p id="pSummary">Your professional summary will appear here.</p>
-        <h3>Skills</h3>
-        <p id="pSkills">Add your skills.</p>
-        <h3>Education</h3>
-        <p id="pEducation">Add your education.</p>
-        <h3>Projects</h3>
-        <p id="pProjects">Add your projects.</p>
-        <h3>Experience</h3>
-        <p id="pExperience">Add your experience or internships.</p>
-      </div>
-    </section>
+   <!-- OTHER PAGES -->
+   <section class="page" id="page-suggestions">
+    <div class="card"><h2>AI Career Suggestions</h2><div id="suggestionResult"></div></div>
+   </section>
 
-    <!-- ATS CHECKER -->
-<section id="page-ats" class="page hidden">
-  <div class="card">
-    <h2>ATS Resume Checker</h2>
-    <p class="muted">
-      Upload a text-based PDF or DOCX resume. Add a target role
-      and optional job description.
-    </p>
+   <section class="page" id="page-recommended">
+    <div class="card"><h2>Recommended Jobs</h2><div id="recommendedJobs"></div></div>
+   </section>
 
-    <form id="atsForm">
-      <label>Resume file (PDF or DOCX, maximum 5 MB)
-        <input id="resumeFile" type="file" accept=".pdf,.docx" required>
-      </label>
+   <section class="page" id="page-jobs">
+    <div class="card">
+     <h2>Job Search</h2>
+     <input id="jobSearchTitle" placeholder="Enter job title">
+     <input id="jobSearchLocation" placeholder="Enter location">
+     <button class="btn" id="searchJobsBtn">Search Jobs</button>
+     <div id="jobResults"></div>
+    </div>
+   </section>
 
-      <label>Target job title
-        <input id="jobTitle" placeholder="SOC Analyst L1">
-      </label>
+   <section class="page" id="page-tracker">
+    <div class="card">
+     <h2>Application Tracker</h2>
+     <div id="applicationList"></div>
+    </div>
+   </section>
 
-      <label>Job description (optional)
-        <textarea id="jobDescription"
-          placeholder="Paste the job description here for keyword comparison."></textarea>
-      </label>
+   <section class="page" id="page-profile">
+    <div class="card">
+     <h2>My Profile</h2>
+     <form id="profileForm">
+      <div class="field"><label>Name</label><input id="profileName"></div>
+      <div class="field"><label>Email</label><input id="profileEmail" type="email"></div>
+      <div class="field"><label>Career</label><input id="profileCareer"></div>
+      <div class="field"><label>Location</label><input id="profileLocation"></div>
+      <button class="btn">Save Profile</button>
+     </form>
+    </div>
+   </section>
 
-      <button class="btn" id="analyzeButton" type="submit">
-        Analyze Resume
-      </button>
-    </form>
+   <section class="page" id="page-settings">
+    <div class="card"><h2>Settings</h2><p>Manage your account settings.</p></div>
+   </section>
 
-    <p id="atsMessage" class="message" aria-live="polite"></p>
-  </div>
+   <!-- ADMIN DASHBOARD -->
+   <section class="page" id="page-admin">
+    <h2>Admin Dashboard</h2>
 
-  <div id="atsResult" class="hidden">
-    <div class="grid">
-      <div class="card">
-        <h2>Estimated ATS Score</h2>
-        <div id="atsScoreNumber" class="stat">0%</div>
-        <div class="progress"><div id="atsScoreBar"></div></div>
-        <p class="small muted">Estimated score only.</p>
-      </div>
-
-      <div class="card">
-        <h2>Resume Structure</h2>
-        <div id="structureScoreNumber" class="stat">0%</div>
-        <div class="progress"><div id="structureScoreBar"></div></div>
-
-        <h3>Detected sections</h3>
-        <div id="presentSections" class="pills"></div>
-
-        <h3>Sections to review</h3>
-        <div id="missingSections" class="pills"></div>
-      </div>
+    <div class="stats">
+     <div class="stat-card">
+      <p>Total Users</p>
+      <h2 id="adminTotalUsers">—</h2>
+     </div>
+     <div class="stat-card">
+      <p>Active Users</p>
+      <h2 id="adminActiveUsers">—</h2>
+     </div>
+     <div class="stat-card">
+      <p>Blocked Users</p>
+      <h2 id="adminBlockedUsers">—</h2>
+     </div>
+     <div class="stat-card">
+      <p>ATS Analyses</p>
+      <h2 id="adminAtsCount">—</h2>
+     </div>
     </div>
 
     <div class="card">
-      <h2>Job Keyword Match</h2>
-      <div id="scoreNumber" class="stat">0%</div>
-      <div class="progress"><div id="scoreBar"></div></div>
-
-      <p id="scoreNote" class="muted small"></p>
-
-      <h3>Matching skills</h3>
-      <div id="matchedSkills" class="pills"></div>
-
-      <h3>Missing skills</h3>
-      <div id="missingSkills" class="pills"></div>
-
-      <h3>Suggestions</h3>
-      <ul id="atsSuggestions" class="list"></ul>
+     <h3>Registered Users</h3>
+     <div class="table-wrap">
+      <table>
+       <thead>
+        <tr>
+         <th>Name</th><th>Email</th><th>Role</th>
+         <th>Status</th><th>Action</th>
+        </tr>
+       </thead>
+       <tbody id="adminUsersRows"></tbody>
+      </table>
+     </div>
+     <p id="adminMessage"></p>
     </div>
+   </section>
+
   </div>
-</section>
-
-    <!-- SEPARATE JOB DESCRIPTION CHECKER -->
-    <section id="page-job-match" class="page hidden">
-      <div class="card">
-        <h2>Job Description Checker</h2>
-        <p class="muted">Upload your resume once, then check it against different job descriptions while this page remains open.</p>
-
-        <form id="jobMatchForm">
-          <label>Resume file (PDF or DOCX, maximum 5 MB)
-            <input id="matchResumeFile" type="file" accept=".pdf,.docx" required>
-          </label>
-          <label>Job title
-            <input id="matchJobTitle" placeholder="SOC Analyst L1">
-          </label>
-          <label>Paste job description
-            <textarea id="matchJobDescription" rows="7" required placeholder="Paste the job description from the company posting."></textarea>
-          </label>
-          <button class="btn" id="matchJobButton" type="submit">Check Job Match</button>
-        </form>
-        <p id="jobMatchMessage" class="message" aria-live="polite"></p>
-      </div>
-
-      <div id="jobMatchResults" class="hidden">
-        <div class="card">
-          <h2>Estimated Job Match</h2>
-          <div id="jobMatchScore" class="stat">0%</div>
-          <div class="progress"><div id="jobMatchScoreBar"></div></div>
-          <p class="small muted">This score compares detected skills with skills found in the job title and description. It does not predict hiring outcomes.</p>
-          <h3>Matching skills</h3>
-          <div id="jobMatchedSkills" class="pills"></div>
-          <h3>Skills to develop or verify</h3>
-          <div id="jobMissingSkills" class="pills"></div>
-          <h3>Suggestions</h3>
-          <ul id="jobMatchSuggestions" class="list"></ul>
-        </div>
-      </div>
-    </section>
-
-    <!-- RECOMMENDED JOBS -->
-<section id="page-jobs" class="page hidden">
-  <div class="card">
-    <h2>Smart Job Recommendations</h2>
-    <p class="muted">
-      Find real job openings matched to your saved resume and skills.
-    </p>
-
-    <div class="form-group">
-      <label for="jobRoleFilter">Job Role</label>
-      <input
-        id="jobRoleFilter"
-        type="text"
-        placeholder="e.g. SOC Analyst, Cybersecurity Analyst"
-        value="cybersecurity"
-      >
-    </div>
-
-    <div class="form-group">
-      <label for="jobLocationFilter">Location</label>
-      <input
-        id="jobLocationFilter"
-        type="text"
-        placeholder="e.g. India, Hyderabad, Bengaluru"
-        value="India"
-      >
-    </div>
-
-    <button class="btn" id="refreshJobs" type="button">
-      Search Jobs
-    </button>
-
-    <div id="jobsList"></div>
-  </div>
-</section>
-    <!-- APPLICATION TRACKER -->
-    <section id="page-tracker" class="page hidden">
-      <div class="card">
-        <h2>Application Tracker</h2>
-        <p class="muted">Record jobs you have applied for and update their status.</p>
-        <form id="trackerForm">
-          <div class="grid">
-            <label>Company
-              <input id="trackerCompany" required placeholder="Company name">
-            </label>
-            <label>Job role
-              <input id="trackerRole" required placeholder="SOC Analyst L1">
-            </label>
-            <label>Application date
-              <input id="trackerDate" type="date" required>
-            </label>
-            <label>Status
-              <select id="trackerStatus">
-                <option>Applied</option>
-                <option>Assessment</option>
-                <option>Interview</option>
-                <option>Offer</option>
-                <option>Rejected</option>
-              </select>
-            </label>
-          </div>
-          <button class="btn" type="submit">Add Application</button>
-        </form>
-        <p id="trackerMessage" class="message" aria-live="polite"></p>
-      </div>
-      <div class="card">
-        <h2>Your Applications</h2>
-        <div id="trackerList"></div>
-      </div>
-    </section>
-
-    <!-- PROFILE -->
-    <section id="page-profile" class="page hidden">
-      <div class="card">
-        <h2>My Profile</h2>
-        <p class="muted">Save your professional skills for job recommendations.</p>
-        <form id="profileForm">
-          <label>Full name
-            <input id="profileName" required>
-          </label>
-          <label>Email
-            <input id="profileEmail" type="email" disabled>
-          </label>
-          <label>Target job role
-            <input id="profileRole" placeholder="SOC Analyst L1">
-          </label>
-          <label>Skills (comma-separated)
-            <textarea id="profileSkills" rows="5" placeholder="Networking, Linux, SIEM, Splunk, Cybersecurity"></textarea>
-          </label>
-          <button class="btn" type="submit">Save Profile</button>
-          <p id="profileMessage" class="message" aria-live="polite"></p>
-        </form>
-      </div>
-    </section>
-  </main>
+ </main>
 </div>
-
 <script>
-"use strict";
+const API = "https://hiremate-ai-quvs.onrender.com";
 
-const API_URL = "https://hiremate-ai-quvs.onrender.com";
+let authToken = localStorage.getItem("hiremate_token") || "";
 let currentUser = null;
-let authToken = null;
-let jobMatchResumeFile = null;
 
 const $ = id => document.getElementById(id);
-$("resumeFile").addEventListener("change", () => {
-const file = $("resumeFile").files[0];
-if (file) jobMatchResumeFile = file;
-});
-const sampleJobs = [
-  {
-    role: "SOC Analyst L1",
-    skills: ["Networking", "Linux", "SIEM", "Splunk", "Cybersecurity", "Incident Response", "Threat Analysis"],
-    description: "Monitor security alerts, investigate suspicious activity, review SIEM events and document incidents."
-  },
-  {
-    role: "Junior Python Developer",
-    skills: ["Python", "SQL", "FastAPI", "Git", "Problem Solving"],
-    description: "Develop Python applications, build APIs, test features and work with databases."
-  },
-  {
-    role: "Junior Data Analyst",
-    skills: ["SQL", "Excel", "Power BI", "Python", "Data Analysis", "Tableau"],
-    description: "Analyze datasets, clean data and prepare dashboards and reports."
-  },
-  {
-    role: "Junior Machine Learning Engineer",
-    skills: ["Python", "Machine Learning", "Pandas", "NumPy", "Scikit-learn"],
-    description: "Prepare data, train machine learning models and evaluate their performance."
-  }
-];
-
-function userKey(suffix) {
-  return "hiremate_" + currentUser.id + "_" + suffix;
-}
-
-function readData(key, fallback) {
-  try {
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function saveData(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
-function setMessage(id, text, success = false) {
-  const el = $(id);
-  el.textContent = text || "";
-  el.classList.toggle("success", success);
-}
 
 async function api(path, options = {}) {
-  const response = await fetch(API_URL + path, options);
-  let data = {};
-  try { data = await response.json(); } catch {}
-  if (!response.ok) {
-    throw new Error(data.detail || data.message || "Request failed.");
+  const headers = {
+    ...(options.headers || {})
+  };
+
+  if (authToken) {
+    headers["Authorization"] = "Bearer " + authToken;
   }
+
+  const response = await fetch(API + path, {
+    ...options,
+    headers
+  });
+
+  let data = {};
+  try {
+    data = await response.json();
+  } catch {}
+
+  if (!response.ok) {
+    throw new Error(data.detail || data.message || "Request failed");
+  }
+
   return data;
 }
-function setAuthMode(mode) {
-  ["loginForm", "signupForm", "forgotForm", "resetForm"].forEach(id => {
-    $(id).classList.add("hidden");
-  });
 
-  const form = {
-    login: "loginForm",
-    signup: "signupForm",
-    forgot: "forgotForm",
-    reset: "resetForm"
-  }[mode];
-
-  if (form) $(form).classList.remove("hidden");
-
-  ["loginMessage", "signupMessage", "forgotMessage", "resetMessage"]
-    .forEach(id => setMessage(id, ""));
+function showError(id, message) {
+  const box = $(id);
+  box.textContent = message;
+  box.style.display = "block";
 }
 
-$("showSignup").addEventListener("click", () => setAuthMode("signup"));
-$("showLogin").addEventListener("click", () => setAuthMode("login"));
-// FORGOT PASSWORD
-$("forgotLink").addEventListener("click", () => {
-  $("forgotEmail").value = $("loginEmail").value.trim();
-  setAuthMode("forgot");
-});
+function clearError(id) {
+  const box = $(id);
+  box.textContent = "";
+  box.style.display = "none";
+}
 
-$("backToLogin1").addEventListener("click", () => setAuthMode("login"));
-$("backToLogin2").addEventListener("click", () => setAuthMode("login"));
+function showAuthPanel(panel) {
+  ["loginPanel", "signupPanel", "forgotPanel"].forEach(id => {
+    $(id).style.display = id === panel ? "block" : "none";
+  });
+}
 
-$("forgotForm").addEventListener("submit", async event => {
+$("showSignup").onclick = () => showAuthPanel("signupPanel");
+$("showForgot").onclick = () => showAuthPanel("forgotPanel");
+$("showLoginFromSignup").onclick = () => showAuthPanel("loginPanel");
+$("showLoginFromForgot").onclick = () => showAuthPanel("loginPanel");
+
+/* LOGIN */
+
+$("loginForm").addEventListener("submit", async event => {
   event.preventDefault();
+  clearError("loginError");
 
-  const email = $("forgotEmail").value.trim();
-  setMessage("forgotMessage", "Sending OTP...");
+  const button = $("loginSubmit");
+  button.disabled = true;
+  button.textContent = "Logging in...";
 
   try {
-    await api("/api/forgot-password", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({email})
-    });
-
-    $("resetEmail").value = email;
-    setAuthMode("reset");
-    setMessage("resetMessage",
-      "If your account exists, an OTP has been sent to your email.", true);
-  } catch (error) {
-    setMessage("forgotMessage", error.message);
-  }
-});
-
-// VERIFY OTP AND RESET PASSWORD
-$("resetForm").addEventListener("submit", async event => {
-  event.preventDefault();
-
-  const email = $("resetEmail").value.trim();
-  const otp = $("resetOtp").value.trim();
-  const password = $("newPassword").value;
-  const confirm = $("confirmPassword").value;
-
-  if (password !== confirm) {
-    setMessage("resetMessage", "Passwords do not match.");
-    return;
-  }
-
-  setMessage("resetMessage", "Resetting password...");
-
-  try {
-    const result = await api("/api/reset-password", {
+    const data = await api("/api/login", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
-        email,
-        otp,
-        new_password: password
+        email: $("loginEmail").value.trim(),
+        password: $("loginPassword").value
       })
     });
 
-    setAuthMode("login");
-    $("loginEmail").value = email;
-    $("loginPassword").value = "";
-    setMessage("loginMessage", result.message, true);
-  } catch (error) {
-    setMessage("resetMessage", error.message);
-  }
-});
+    if (!data.token) throw new Error("Login token was not received.");
 
-// GOOGLE LOGIN
-const GOOGLE_CLIENT_ID =
-  "37321939118-00gtinq0rv700nf8mimeuru9c8uo4mvs.apps.googleusercontent.com";
-
-async function handleGoogleCredential(response) {
-  setMessage("loginMessage", "Signing in with Google...");
-
-  try {
-    const result = await api("/api/auth/google", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        credential: response.credential
-      })
-    });
-
-    authToken = result.token;
-    currentUser = result.user;
-
+    authToken = data.token;
     localStorage.setItem("hiremate_token", authToken);
-    localStorage.setItem("hiremate_user", JSON.stringify(currentUser));
 
-    enterApp();
+    await loadCurrentUser(data.user);
   } catch (error) {
-    setMessage("loginMessage", error.message);
+    showError("loginError", error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Login";
   }
-}
+});
 
-function initializeGoogleLogin() {
-  if (!window.google || !google.accounts || !google.accounts.id) {
-    setTimeout(initializeGoogleLogin, 500);
-    return;
-  }
+/* SIGNUP */
 
-  google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: handleGoogleCredential
-  });
-
-  google.accounts.id.renderButton(
-    $("googleButton"),
-    {
-      theme: "outline",
-      size: "large",
-      text: "continue_with",
-      shape: "rectangular",
-      width: 350
-    }
-  );
-}
-
-initializeGoogleLogin();
 $("signupForm").addEventListener("submit", async event => {
   event.preventDefault();
-  setMessage("signupMessage", "Creating account...");
+  clearError("signupError");
+
+  const button = $("signupSubmit");
+  button.disabled = true;
+  button.textContent = "Creating account...";
+
   try {
-    const result = await api("/api/signup", {
+    await api("/api/signup", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
@@ -897,872 +526,386 @@ $("signupForm").addEventListener("submit", async event => {
         password: $("signupPassword").value
       })
     });
-    setMessage("signupMessage", result.message, true);
+
+    alert("Account created successfully. Please login.");
     $("loginEmail").value = $("signupEmail").value.trim();
     $("loginPassword").value = "";
-    setAuthMode("login");
-    setMessage("loginMessage", "Account created. Please log in.", true);
+    showAuthPanel("loginPanel");
+
   } catch (error) {
-    setMessage("signupMessage", error.message);
+    showError("signupError", error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Create Account";
   }
 });
 
-$("loginForm").addEventListener("submit", async event => {
+/* FORGOT PASSWORD - SEND OTP */
+
+$("forgotForm").addEventListener("submit", async event => {
   event.preventDefault();
-  setMessage("loginMessage", "Logging in...");
+  clearError("forgotError");
+
   try {
-    const result = await api("/api/login", {
+    const email = $("forgotEmail").value.trim();
+
+    await api("/api/forgot-password", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({email})
+    });
+
+    alert("If the account exists, an OTP has been sent.");
+    $("resetForm").style.display = "block";
+
+  } catch (error) {
+    showError("forgotError", error.message);
+  }
+});
+
+/* RESET PASSWORD */
+
+$("resetForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  clearError("resetError");
+
+  try {
+    await api("/api/reset-password", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
-        email: $("loginEmail").value.trim(),
-        password: $("loginPassword").value
+        email: $("forgotEmail").value.trim(),
+        otp: $("resetOtp").value.trim(),
+        new_password: $("resetPassword").value
       })
     });
-    authToken = result.token;
-    currentUser = result.user;
-    localStorage.setItem("hiremate_token", authToken);
-    localStorage.setItem("hiremate_user", JSON.stringify(currentUser));
-    enterApp();
+
+    alert("Password reset successfully. Please login.");
+    $("resetForm").reset();
+    $("forgotForm").reset();
+    $("resetForm").style.display = "none";
+    showAuthPanel("loginPanel");
+
   } catch (error) {
-    setMessage("loginMessage", error.message);
+    showError("resetError", error.message);
   }
 });
 
-async function restoreSession() {
-  console.log("RESTORE SESSION STARTED");
+/* SESSION */
 
-  const token = localStorage.getItem("hiremate_token");
-  if (!token) return;
+async function loadCurrentUser(loginUser = null) {
+  let user = loginUser;
 
-  try {
-    const result = await api("/api/me?token=" + encodeURIComponent(token));
-    authToken = token;
-    currentUser = result.user;
-
-    console.log("SESSION RESTORED");
-    enterApp();
-  } catch (error) {
-    console.log("SESSION RESTORE FAILED:", error);
-    localStorage.removeItem("hiremate_token");
-    localStorage.removeItem("hiremate_user");
+  if (!user) {
+    const data = await api("/api/me?token=" + encodeURIComponent(authToken));
+    user = data.user;
   }
+
+  if (!user) throw new Error("User information not received.");
+
+  currentUser = user;
+  enterApp(user);
 }
 
-function enterApp() {
-  $("authScreen").classList.add("hidden");
-  $("appScreen").classList.remove("hidden");
-  $("sidebarUser").textContent = currentUser.name;
-  $("welcomeText").textContent = "Welcome, " + currentUser.name + "!";
-  loadResume();
-  loadProfile();
-  renderJobs();
-  renderTracker();
+function enterApp(user) {
+  $("authOverlay").style.display = "none";
+  $("mainApp").style.display = "flex";
+
+  $("topName").textContent = user.name || user.email;
+  $("topRole").textContent =
+    user.role === "admin" ? " (Admin)" : "";
+
+  $("profileName").value = user.name || "";
+  $("profileEmail").value = user.email || "";
+
+  const isAdmin = user.role === "admin";
+
+  $("adminNav").style.display = isAdmin ? "block" : "none";
+
+  if (isAdmin) {
+    loadAdminDashboard();
+  }
+
   showPage("dashboard");
 }
 
-async function logout() {
+async function restoreSession() {
+  if (!authToken) {
+    $("authOverlay").style.display = "grid";
+    return;
+  }
+
   try {
-    if (authToken) {
-      await api("/api/logout", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({token: authToken})
-      });
-    }
-  } catch {}
-  authToken = null;
-  currentUser = null;
-  jobMatchResumeFile = null;
-  localStorage.removeItem("hiremate_token");
-  localStorage.removeItem("hiremate_user");
-  $("appScreen").classList.add("hidden");
-  $("authScreen").classList.remove("hidden");
-  $("loginForm").reset();
-  setAuthMode("login");
-}
-$("logoutButton").addEventListener("click", logout);
-
-const pageNames = {
-  dashboard: "Dashboard",
-  resume: "Resume Builder",
-  ats: "ATS Resume Checker",
-  "job-match": "Job Description Checker",
-  jobs: "Recommended Jobs",
-  tracker: "Application Tracker",
-  profile: "My Profile"
-};
-window.addEventListener("beforeunload",() => {
-  console.log("PAGE IS RELOADING");
-})
-function showPage(page) {
-  console.trace("PAGE CHANGED TO:",page);
-  if (!pageNames[page]) return;
-  document.querySelectorAll(".page").forEach(section => {
-    section.classList.toggle("hidden", section.id !== "page-" + page);
-  });
-  document.querySelectorAll(".nav-button").forEach(button => {
-    button.classList.toggle("active", button.dataset.page === page);
-  });
-  $("pageHeading").textContent = pageNames[page];
-  if (page === "jobs") renderJobs();
-  if (page === "tracker") renderTracker();
-}
-
-document.querySelectorAll("[data-page]").forEach(button => {
-  button.addEventListener("click", () => showPage(button.dataset.page));
-});
-document.querySelectorAll("[data-go]").forEach(button => {
-  button.addEventListener("click", () => showPage(button.dataset.go));
-});
-
-function getResumeData() {
-  return {
-    name: $("rName").value.trim(),
-    email: $("rEmail").value.trim(),
-    phone: $("rPhone").value.trim(),
-    location: $("rLocation").value.trim(),
-    role: $("rRole").value.trim(),
-    summary: $("rSummary").value.trim(),
-    skills: $("rSkills").value.trim(),
-    education: $("rEducation").value.trim(),
-    projects: $("rProjects").value.trim(),
-    experience: $("rExperience").value.trim()
-  };
-}
-
-function renderResumePreview(data = getResumeData()) {
-  $("pName").textContent = data.name || "Your Name";
-  $("pContact").textContent = [
-    data.email, data.phone, data.location
-  ].filter(Boolean).join(" | ") || "Email · Phone · Location";
-  $("pRole").textContent = data.role || "Professional Profile";
-  $("pSummary").textContent = data.summary || "Add your professional summary.";
-  $("pSkills").textContent = data.skills || "Add your skills.";
-  $("pEducation").textContent = data.education || "Add your education.";
-  $("pProjects").textContent = data.projects || "Add your projects.";
-  $("pExperience").textContent = data.experience || "Add your experience.";
-}
-
-function loadResume() {
-  const data = readData(userKey("resume"), null);
-  if (data) {
-    const map = {
-      name: "rName", email: "rEmail", phone: "rPhone",
-      location: "rLocation", role: "rRole", summary: "rSummary",
-      skills: "rSkills", education: "rEducation",
-      projects: "rProjects", experience: "rExperience"
-    };
-    Object.entries(map).forEach(([key, id]) => {
-      $(id).value = data[key] || "";
-    });
-    renderResumePreview(data);
+    await loadCurrentUser();
+  } catch {
+    authToken = "";
+    currentUser = null;
+    localStorage.removeItem("hiremate_token");
+    $("mainApp").style.display = "none";
+    $("authOverlay").style.display = "grid";
   }
 }
+
+/* LOGOUT */
+
+$("logoutBtn").addEventListener("click", async () => {
+  try {
+    await api("/api/logout", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({token: authToken})
+    });
+  } catch (error) {
+    console.warn("Logout request:", error.message);
+  }
+
+  authToken = "";
+  currentUser = null;
+  localStorage.removeItem("hiremate_token");
+
+  $("mainApp").style.display = "none";
+  $("authOverlay").style.display = "grid";
+  $("loginForm").reset();
+  showAuthPanel("loginPanel");
+});
+
+/* PAGE NAVIGATION */
+
+function showPage(page) {
+  if (page === "admin" && currentUser?.role !== "admin") {
+    alert("Admin access required.");
+    return;
+  }
+
+  document.querySelectorAll(".page").forEach(section => {
+    section.classList.remove("active");
+  });
+
+  document.querySelectorAll(".nav-item").forEach(button => {
+    button.classList.remove("active");
+  });
+
+  const target = $("page-" + page);
+  if (!target) return;
+
+  target.classList.add("active");
+
+  const nav = document.querySelector(
+    '.nav-item[data-page="' + page + '"]'
+  );
+
+  if (nav) nav.classList.add("active");
+
+  $("pageTitle").textContent =
+    page.charAt(0).toUpperCase() + page.slice(1);
+
+  if (page === "admin") loadAdminDashboard();
+}
+
+document.querySelectorAll(".nav-item[data-page]").forEach(button => {
+  button.addEventListener("click", () => {
+    showPage(button.dataset.page);
+  });
+});
+
+document.querySelectorAll("[data-go]").forEach(button => {
+  button.addEventListener("click", () => {
+    showPage(button.dataset.go);
+  });
+});
+
+/* RESUME PREVIEW */
 
 $("resumeForm").addEventListener("submit", event => {
   event.preventDefault();
-  const data = getResumeData();
-  saveData(userKey("resume"), data);
-  renderResumePreview(data);
-  setMessage("resumeMessage", "Resume saved in this browser and preview updated.", true);
-  renderJobs();
+
+  const fields = [
+    ["Name", "rName"],
+    ["Email", "rEmail"],
+    ["Phone", "rPhone"],
+    ["Location", "rLocation"],
+    ["Professional Summary", "rSummary"],
+    ["Education", "rEducation"],
+    ["Technical Skills", "rSkills"],
+    ["Projects", "rProjects"],
+    ["Experience / Internships", "rExperience"],
+    ["Certifications", "rCertifications"]
+  ];
+
+  let html = "";
+
+  fields.forEach(([label, id]) => {
+    const value = $(id).value.trim();
+    if (value) {
+      html += `<h3>${label}</h3>
+        <p>${escapeHTML(value).replace(/\n/g, "<br>")}</p>`;
+    }
+  });
+
+  $("resumeContent").innerHTML = html;
+  $("resumePreview").style.display = "block";
+  $("statResume").textContent = "1";
 });
 
-$("printResume").addEventListener("click", () => {
-  renderResumePreview();
-  window.print();
-});
-
-function renderPills(id, values, color = "") {
-  const el = $(id);
-  el.replaceChildren();
-  const items = Array.isArray(values) ? values : [];
-  if (!items.length) {
-    const span = document.createElement("span");
-    span.className = "muted small";
-    span.textContent = "None detected.";
-    el.appendChild(span);
-    return;
-  }
-  items.forEach(value => {
-    const span = document.createElement("span");
-    span.className = "pill " + color;
-    span.textContent = value;
-    el.appendChild(span);
-  });
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
 }
 
-function renderList(id, values) {
-  const el = $(id);
-  el.replaceChildren();
-  (Array.isArray(values) ? values : []).forEach(value => {
-    const li = document.createElement("li");
-    li.textContent = value;
-    el.appendChild(li);
-  });
-}
+/* ATS RESUME ANALYSIS */
 
-function updateProgress(id, value) {
-  $(id).style.width =
-    Math.max(0, Math.min(100, Number(value) || 0)) + "%";
-}
-
-// ATS Resume Checker
-$("atsForm").addEventListener("submit", async function(event) {
+$("atsForm").addEventListener("submit", async event => {
   event.preventDefault();
-  event.stopPropagation();
-
-  console.log("ATS ANALYSIS STARTED");
 
   const file = $("resumeFile").files[0];
-
   if (!file) {
-    setMessage("atsMessage", "Please select a resume file.");
+    alert("Please upload your resume.");
     return;
   }
 
-  const button = $("analyzeButton");
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("job_title", $("jobTitle").value.trim());
+  formData.append("job_description", $("jobDescription").value.trim());
 
-  button.disabled = true;
-  button.textContent = "Analyzing...";
-
-  $("atsResult").classList.add("hidden");
-  setMessage("atsMessage", "Analyzing your resume...", false);
+  $("atsResult").textContent = "Analyzing resume...";
 
   try {
-    const form = new FormData();
-
-    form.append("file", file);
-    form.append("job_title", $("jobTitle").value.trim());
-    form.append("job_description", $("jobDescription").value.trim());
-
-    // Save resume for the logged-in user
-    const saveForm = new FormData();
-
-    saveForm.append("token", authToken);
-    saveForm.append("file", file);
-    await api("/api/resume", {
+    const data = await api("/api/analyze-resume", {
       method: "POST",
-      body: saveForm
-    })
-
-    // Resume saving temporarily disabled for testing
-
-    // Analyze resume
-    const result = await api("/api/analyze-resume", {
-      method: "POST",
-      body: form
+      body: formData
     });
 
-    // Display scores
-    $("atsScoreNumber").textContent =
-      result.ats_score + "%";
+    const score = data.keyword_match_score ?? 0;
 
-    updateProgress("atsScoreBar", result.ats_score);
+    $("statATS").textContent = score + "%";
 
-    $("structureScoreNumber").textContent =
-      result.structure_score + "%";
-
-    updateProgress("structureScoreBar", result.structure_score);
-
-    $("scoreNumber").textContent =
-      result.keyword_score + "%";
-
-    updateProgress("scoreBar", result.keyword_score);
-
-    $("scoreNote").textContent =
-      result.note || "Estimated keyword match.";
-
-    // Display sections and skills
-    renderPills(
-      "presentSections",
-      result.present_sections,
-      "green"
-    );
-
-    renderPills(
-      "missingSections",
-      result.missing_sections,
-      "red"
-    );
-
-    renderPills(
-      "matchedSkills",
-      result.matched_skills,
-      "green"
-    );
-
-    renderPills(
-      "missingSkills",
-      result.missing_skills,
-      "red"
-    );
-
-    renderList("atsSuggestions", result.suggestions);
-
-    // Show results without changing pages
-    $("atsResult").classList.remove("hidden");
-
-    setMessage(
-      "atsMessage",
-      "✓ Resume analyzed successfully!",
-      true
-    );
-
-    console.log("ATS ANALYSIS COMPLETED");
-
-    $("atsResult").scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
+    $("atsResult").innerHTML = `
+      <h3>ATS Analysis Result</h3>
+      <h2>${escapeHTML(score)}%</h2>
+      <p>${escapeHTML(data.assessment || "")}</p>
+      <p><b>Matched Skills:</b>
+      ${escapeHTML((data.matched_skills || []).join(", "))}</p>
+      <p><b>Missing Skills:</b>
+      ${escapeHTML((data.missing_skills || []).join(", "))}</p>
+    `;
 
   } catch (error) {
-    console.error("ATS analysis error:", error);
-
-    setMessage(
-      "atsMessage",
-      error.message || "Resume analysis failed.",
-      false
-    );
-
-  } finally {
-    button.disabled = false;
-    button.textContent = "Analyze Resume";
+    $("atsResult").textContent = error.message;
   }
 });
 
-/* Job Description Checker: selected file can be reused for multiple checks
-   while this page remains open. The browser will require re-selection after refresh. */
-$("matchResumeFile").addEventListener("change", () => {
-  jobMatchResumeFile = $("matchResumeFile").files[0] || null;
-});
+/* ADMIN DASHBOARD */
 
-$("jobMatchForm").addEventListener("submit", async event => {
-  event.preventDefault();
+async function loadAdminDashboard() {
+  if (currentUser?.role !== "admin") return;
 
-  if (!jobMatchResumeFile) {
-    setMessage("jobMatchMessage", "Please select your resume first.");
-    return;
-  }
-
-  const description = $("matchJobDescription").value.trim();
-  if (!description) {
-    setMessage("jobMatchMessage", "Paste a job description first.");
-    return;
-  }
-
-  const button = $("matchJobButton");
-  button.disabled = true;
-  button.textContent = "Checking...";
-  $("jobMatchResults").classList.add("hidden");
-  setMessage("jobMatchMessage", "");
+  $("adminMessage").textContent = "Loading admin data...";
 
   try {
-    const form = new FormData();
-    form.append("file", jobMatchResumeFile);
-    form.append("job_title", $("matchJobTitle").value.trim());
-    form.append("job_description", description);
+    const [overview, usersData] = await Promise.all([
+      api("/api/admin/overview?token=" + encodeURIComponent(authToken)),
+      api("/api/admin/users?token=" + encodeURIComponent(authToken))
+    ]);
 
-    const result = await api("/api/job-match", {
-      method: "POST",
-      body: form
-    });
+    const users = usersData.users || [];
+    const stats = overview.users || {};
+    const ats = overview.ats || {};
 
-    $("jobMatchScore").textContent = result.job_match_score + "%";
-    updateProgress("jobMatchScoreBar", result.job_match_score);
-    renderPills("jobMatchedSkills", result.matched_skills, "green");
-    renderPills("jobMissingSkills", result.missing_skills, "red");
-    renderList("jobMatchSuggestions", result.suggestions);
-    $("jobMatchResults").classList.remove("hidden");
-    setMessage("jobMatchMessage", "Job match check complete.", true);
+    $("adminTotalUsers").textContent = stats.total_users ?? users.length;
+    $("adminActiveUsers").textContent = stats.active_users ?? "—";
+    $("adminBlockedUsers").textContent = stats.blocked_users ?? "—";
+    $("adminAtsCount").textContent = ats.total_analyses ?? "—";
+
+    $("adminUsersRows").innerHTML = users.map(user => {
+      const blocked = user.status === "blocked";
+
+      return `
+        <tr>
+          <td>${escapeHTML(user.name || "")}</td>
+          <td>${escapeHTML(user.email || "")}</td>
+          <td>${escapeHTML(user.role || "user")}</td>
+          <td>${escapeHTML(user.status || "active")}</td>
+          <td>
+            ${
+              user.role === "admin"
+              ? "Admin account"
+              : `<button class="btn"
+                  onclick="changeUserStatus('${escapeHTML(user.id)}',
+                  '${blocked ? "active" : "blocked"}')">
+                  ${blocked ? "Unblock" : "Block"}
+                </button>`
+            }
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    $("adminMessage").textContent = "";
+
   } catch (error) {
-    setMessage("jobMatchMessage", error.message);
-  } finally {
-    button.disabled = false;
-    button.textContent = "Check Job Match";
-  }
-});
-
-async function checkSavedResume() {
-  if (!currentUser || !authToken) return false;
-
-  try {
-    const result = await api(
-      "/api/resume?token=" + encodeURIComponent(authToken)
-    );
-
-    if (result.exists) {
-      console.log("Saved resume found:", result.filename);
-      return true;
-    }
-
-    console.log("No saved resume found.");
-    return false;
-  } catch (error) {
-    console.error("Resume check failed:", error.message);
-    return false;
+    $("adminMessage").textContent =
+      "Admin error: " + error.message;
   }
 }
 
-function getUserSkills() {
-  const profile = readData(userKey("profile"), {});
-  const resume = readData(userKey("resume"), {});
-  const combined = [
-    ...(profile.skills || []),
-    ...(resume.skills || "").split(",")
-  ];
-  return [...new Set(combined.map(s => String(s).trim().toLowerCase()).filter(Boolean))];
-}
+/* BLOCK / UNBLOCK USER */
 
-async function renderJobs() {
-  if (!currentUser || !authToken) return;
+async function changeUserStatus(userId, status) {
+  if (currentUser?.role !== "admin") {
+    alert("Admin access required.");
+    return;
+  }
 
-  const list = $("jobsList");
-  list.replaceChildren();
+  const action = status === "blocked" ? "block" : "unblock";
 
-  const role =
-    $("jobRoleFilter").value.trim() || "cybersecurity";
-
-  const location =
-    $("jobLocationFilter").value.trim() || "India";
-
-  const loading = document.createElement("p");
-  loading.textContent = "Finding jobs matched to your saved resume...";
-  list.appendChild(loading);
+  if (!confirm("Are you sure you want to " + action + " this user?")) {
+    return;
+  }
 
   try {
-    // Use the resume already saved in the backend.
-    // No need to upload the resume again.
-    const formData = new FormData();
-
-    formData.append("token", authToken);
-    formData.append("title", role);
-    formData.append("location", location);
-    formData.append("page", "1");
-
-    const response = await fetch(
-      `${API_URL}/api/jobs/match`,
+    await api(
+      "/api/admin/users/" + encodeURIComponent(userId) +
+      "/status?token=" + encodeURIComponent(authToken),
       {
         method: "POST",
-        body: formData
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({status})
       }
     );
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.detail || "Could not find matching jobs."
-      );
-    }
-
-    const jobs = Array.isArray(data.jobs) ? data.jobs : [];
-
-    list.replaceChildren();
-
-    const resumeInfo = document.createElement("p");
-    resumeInfo.className = "small muted";
-    resumeInfo.textContent =
-      "Using saved resume: " +
-      (data.resume_filename || "Your saved resume");
-
-    list.appendChild(resumeInfo);
-
-    if (!jobs.length) {
-      const message = document.createElement("p");
-      message.textContent =
-        "No jobs found. Try another role or location.";
-
-      list.appendChild(message);
-      return;
-    }
-
-    jobs.forEach(job => {
-      const title =
-        job.role || job.title || "Job opening";
-
-      const description =
-        job.description || "Description unavailable.";
-
-      const company =
-        typeof job.company === "object"
-          ? job.company?.display_name || "Not specified"
-          : job.company || "Not specified";
-
-      const jobLocation =
-        typeof job.location === "object"
-          ? job.location?.display_name || location
-          : job.location || location;
-
-      const applyUrl =
-        job.url || job.redirect_url || job.apply_url || "";
-
-      const score = Math.max(
-        0,
-        Math.min(100, Number(job.match_score) || 0)
-      );
-
-      const matchedSkills = Array.isArray(job.matched_skills)
-        ? job.matched_skills
-        : [];
-
-      const missingSkills = Array.isArray(job.missing_skills)
-        ? job.missing_skills
-        : [];
-
-      const card = document.createElement("div");
-      card.className = "job-card";
-
-      const heading = document.createElement("h3");
-      heading.textContent = title;
-      card.appendChild(heading);
-
-      const companyLine = document.createElement("p");
-      companyLine.textContent = "Company: " + company;
-      card.appendChild(companyLine);
-
-      const locationLine = document.createElement("p");
-      locationLine.textContent = "Location: " + jobLocation;
-      card.appendChild(locationLine);
-
-      const scoreLine = document.createElement("p");
-      scoreLine.className = "small";
-      scoreLine.textContent =
-        "Estimated Resume Match: " + score + "%";
-      card.appendChild(scoreLine);
-
-      const progress = document.createElement("div");
-      progress.className = "progress";
-
-      const bar = document.createElement("div");
-      bar.style.width = score + "%";
-      progress.appendChild(bar);
-
-      card.appendChild(progress);
-
-      const matchedLine = document.createElement("p");
-      matchedLine.textContent = matchedSkills.length
-        ? "Matched skills: " + matchedSkills.join(", ")
-        : "Matched skills: No matching skills identified";
-
-      card.appendChild(matchedLine);
-
-      const missingLine = document.createElement("p");
-      missingLine.textContent = missingSkills.length
-        ? "Skills to consider learning: " + missingSkills.join(", ")
-        : "Skills to consider learning: None identified";
-
-      card.appendChild(missingLine);
-
-      const details = document.createElement("p");
-      details.textContent =
-        description.length > 500
-          ? description.slice(0, 500) + "..."
-          : description;
-
-      card.appendChild(details);
-
-      if (applyUrl) {
-        try {
-          const url = new URL(applyUrl);
-
-          if (
-            url.protocol === "https:" ||
-            url.protocol === "http:"
-          ) {
-            const apply = document.createElement("a");
-
-            apply.className = "btn";
-            apply.textContent = "Apply Now";
-            apply.href = url.href;
-            apply.target = "_blank";
-            apply.rel = "noopener noreferrer";
-
-            card.appendChild(apply);
-          }
-        } catch {
-          // Ignore invalid application URLs.
-        }
-      }
-
-      list.appendChild(card);
-    });
+    alert("User status updated.");
+    await loadAdminDashboard();
 
   } catch (error) {
-    console.error("Job loading error:", error);
-
-    list.replaceChildren();
-
-    const message = document.createElement("p");
-
-    message.textContent =
-      error.message === "Please upload your resume first."
-        ? "Please upload your resume in ATS Checker first."
-        : error.message ||
-          "Could not load jobs. Check the backend server.";
-
-    list.appendChild(message);
+    alert(error.message);
   }
 }
-$("refreshJobs").addEventListener("click", renderJobs);
 
-function loadProfile() {
-  const saved = readData(userKey("profile"), {});
-  $("profileName").value = saved.name || currentUser.name || "";
-  $("profileEmail").value = currentUser.email || "";
-  $("profileRole").value = saved.role || "";
-  $("profileSkills").value = Array.isArray(saved.skills) ? saved.skills.join(", ") : "";
-
-  if (!saved.skills || !saved.skills.length) {
-    const resume = readData(userKey("resume"), {});
-    $("profileSkills").value = resume.skills || "";
-  }
-}
+/* PROFILE */
 
 $("profileForm").addEventListener("submit", event => {
   event.preventDefault();
-  const profile = {
-    name: $("profileName").value.trim(),
-    role: $("profileRole").value.trim(),
-    skills: $("profileSkills").value.split(",").map(s => s.trim()).filter(Boolean)
-  };
-  saveData(userKey("profile"), profile);
-  $("sidebarUser").textContent = profile.name || currentUser.name;
-  $("welcomeText").textContent = "Welcome, " + (profile.name || currentUser.name) + "!";
-  setMessage("profileMessage", "Profile saved successfully.", true);
-  renderJobs();
+  alert("Profile details are currently displayed locally. A backend profile-update API is needed to save them permanently.");
 });
 
-function renderTracker() {
-  if (!currentUser) return;
-  const list = $("trackerList");
-  list.replaceChildren();
-  const items = readData(userKey("tracker"), []);
+/* JOB SEARCH PLACEHOLDER */
 
-  if (!items.length) {
-    const p = document.createElement("p");
-    p.className = "muted";
-    p.textContent = "No applications added yet.";
-    list.appendChild(p);
-    return;
-  }
-
-  items.forEach(item => {
-    const card = document.createElement("div");
-    card.className = "tracker-item";
-
-    const heading = document.createElement("h3");
-    heading.textContent = item.company + " — " + item.role;
-    card.appendChild(heading);
-
-    const detail = document.createElement("p");
-    detail.className = "small muted";
-    detail.textContent = "Date: " + item.date + " · Status: " + item.status;
-    card.appendChild(detail);
-
-    const controls = document.createElement("div");
-    controls.className = "row";
-
-    const statusSelect = document.createElement("select");
-    ["Applied", "Assessment", "Interview", "Offer", "Rejected"].forEach(status => {
-      const option = document.createElement("option");
-      option.value = status;
-      option.textContent = status;
-      statusSelect.appendChild(option);
-    });
-    statusSelect.value = item.status;
-    statusSelect.setAttribute("aria-label", "Update application status");
-    statusSelect.addEventListener("change", () => {
-      const all = readData(userKey("tracker"), []);
-      const target = all.find(x => x.id === item.id);
-      if (target) target.status = statusSelect.value;
-      saveData(userKey("tracker"), all);
-      renderTracker();
-    });
-    controls.appendChild(statusSelect);
-
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.className = "btn danger";
-    remove.textContent = "Delete";
-    remove.addEventListener("click", () => {
-      const updated = readData(userKey("tracker"), []).filter(x => x.id !== item.id);
-      saveData(userKey("tracker"), updated);
-      renderTracker();
-    });
-    controls.appendChild(remove);
-    card.appendChild(controls);
-    list.appendChild(card);
-  });
-}
-
-$("trackerDate").value = new Date().toISOString().slice(0, 10);
-
-$("trackerForm").addEventListener("submit", event => {
-  event.preventDefault();
-
-  const item = {
-    id: Date.now().toString() + Math.random().toString(16).slice(2),
-    company: $("trackerCompany").value.trim(),
-    role: $("trackerRole").value.trim(),
-    date: $("trackerDate").value,
-    status: $("trackerStatus").value
-  };
-
-  const items = readData(userKey("tracker"), []);
-  items.unshift(item);
-  saveData(userKey("tracker"), items);
-  $("trackerForm").reset();
-  $("trackerDate").value = new Date().toISOString().slice(0, 10);
-  setMessage("trackerMessage", "Application added.", true);
-  renderTracker();
+$("searchJobsBtn").addEventListener("click", () => {
+  $("jobResults").textContent =
+    "Job search API integration is not connected in this frontend section yet.";
 });
 
-setAuthMode("login");
+/* START APPLICATION */
+
 restoreSession();
+
 </script>
-  <!-- HireMate AI Login / Signup -->
-<div id="hmAuth" style="
-position:fixed;inset:0;z-index:99999;background:#f5f7fc;
-display:flex;align-items:center;justify-content:center;padding:20px">
-  <div style="background:white;padding:28px;border-radius:16px;
-  width:100%;max-width:400px;box-shadow:0 8px 35px #0001">
-    <h2 style="color:#635bff;text-align:center">HireMate AI</h2>
-    <p style="text-align:center;color:#777">Your career starts here</p>
 
-    <div id="hmSignupFields" style="display:none">
-      <input id="hmName" placeholder="Full name"
-        style="width:100%;padding:12px;margin:7px 0">
-    </div>
-
-    <input id="hmEmail" type="email" placeholder="Email address"
-      style="width:100%;padding:12px;margin:7px 0">
-    <input id="hmPassword" type="password" placeholder="Password"
-      style="width:100%;padding:12px;margin:7px 0">
-
-    <button id="hmSubmit" class="btn" style="width:100%;margin-top:12px">
-      Login
-    </button>
-
-    <p style="text-align:center;font-size:14px">
-      <span id="hmSwitchText">New user?</span>
-      <button id="hmSwitch" type="button"
-        style="border:0;background:none;color:#635bff">Create account</button>
-    </p>
-
-    <p id="hmMessage" style="font-size:13px;text-align:center"></p>
-  </div>
-</div>
-
-<script>
-(() => {
-  const API = "https://hiremate-ai-quvs.onrender.com";
-  const overlay = document.getElementById("hmAuth");
-  const signupFields = document.getElementById("hmSignupFields");
-  const submit = document.getElementById("hmSubmit");
-  const message = document.getElementById("hmMessage");
-
-  let signupMode = false;
-
-  function showMessage(text, color = "#d94343") {
-    message.textContent = text;
-    message.style.color = color;
-  }
-
-  document.getElementById("hmSwitch").addEventListener("click", () => {
-    signupMode = !signupMode;
-    signupFields.style.display = signupMode ? "block" : "none";
-    submit.textContent = signupMode ? "Create Account" : "Login";
-    document.getElementById("hmSwitchText").textContent =
-      signupMode ? "Already registered?" : "New user?";
-    document.getElementById("hmSwitch").textContent =
-      signupMode ? "Login" : "Create account";
-    showMessage("");
-  });
-
-  async function verifySession() {
-    const token = localStorage.getItem("hiremate_token");
-    if (!token) return;
-
-    try {
-      const response = await fetch(
-        `${API}/api/me?token=${encodeURIComponent(token)}`
-      );
-
-      if (response.ok) {
-        const data = await response.json()
-        alert("Your HireMate role: " + (data.user?.role || "missing"));
-        overlay.style.display = "none";
-
-        if (data.user?.name) {
-          document.getElementById("topName").textContent = data.user.name;
-          document.getElementById("avatar").textContent =
-            data.user.name.charAt(0).toUpperCase();
-        }
-
-        if (data.user?.role === "admin") {
-          document.getElementById("adminNav").style.display = "block";
-        }
-      } else {
-        localStorage.removeItem("hiremate_token");
-      }
-    } catch (error) {
-      showMessage("Server connection failed. Try again.");
-    }
-  }
-
-  submit.addEventListener("click", async () => {
-    const email = document.getElementById("hmEmail").value.trim();
-    const password = document.getElementById("hmPassword").value;
-    const name = document.getElementById("hmName").value.trim();
-
-    if (!email || !password || (signupMode && !name)) {
-      showMessage("Please fill in all required fields.");
-      return;
-    }
-
-    submit.disabled = true;
-    submit.textContent = "Please wait...";
-    showMessage("");
-
-    try {
-      const endpoint = signupMode ? "/api/signup" : "/api/login";
-      const body = signupMode
-        ? { name, email, password }
-        : { email, password };
-
-      const response = await fetch(API + endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || "Authentication failed.");
-      }
-
-      const token = data.token || data.access_token;
-      if (!token) {
-        throw new Error("Login response did not contain a session token.");
-      }
-
-      localStorage.setItem("hiremate_token", token);
-      showMessage("Login successful!", "#159b70");
-      await verifySession();
-
-    } catch (error) {
-      showMessage(error.message);
-    } finally {
-      submit.disabled = false;
-      submit.textContent = signupMode ? "Create Account" : "Login";
-    }
-  });
-
-  verifySession();
-})();
-</script>
 </body>
 </html>
