@@ -791,13 +791,25 @@ $("atsForm").addEventListener("submit", async event => {
   }
 
   const formData = new FormData();
+  formData.append("token", authToken);
   formData.append("file", file);
   formData.append("job_title", $("jobTitle").value.trim());
   formData.append("job_description", $("jobDescription").value.trim());
 
-  $("atsResult").textContent = "Analyzing resume...";
+  $("atsResult").textContent = "Saving and analyzing resume...";
 
   try {
+    // Save resume in database
+    const saveData = new FormData();
+    saveData.append("token", authToken);
+    saveData.append("file", file);
+
+    await api("/api/resume", {
+      method: "POST",
+      body: saveData
+    });
+
+    // Analyze resume
     const data = await api("/api/analyze-resume", {
       method: "POST",
       body: formData
@@ -806,12 +818,37 @@ $("atsForm").addEventListener("submit", async event => {
     const score = Number(
       data.keyword_score ?? data.score ?? data.ats_score ?? 0
     );
-    console.log("ATS API RESPONSE:", data);
 
     const matched = data.matched_skills || [];
     const missing = data.missing_skills || [];
     const detected = data.detected_skills || [];
 
+    localStorage.setItem(
+      "hm_ats_skills",
+      JSON.stringify([...new Set([...matched, ...detected])])
+    );
+
+    $("statATS").textContent = score + "%";
+
+    $("atsResult").innerHTML = `
+      <h3>ATS Analysis Result</h3>
+      <h2>${escapeHTML(score)}%</h2>
+      <p>${escapeHTML(data.note || "Analysis completed.")}</p>
+      <p><b>Matched Skills:</b> ${escapeHTML(matched.join(", ") || "None")}</p>
+      <p><b>Missing Skills:</b> ${escapeHTML(missing.join(", ") || "None")}</p>
+      <p><b>Detected Skills:</b> ${escapeHTML(detected.join(", ") || "None")}</p>
+      <button class="btn" id="showRecommendedJobs">Show Recommended Jobs</button>
+    `;
+
+    $("showRecommendedJobs").addEventListener("click", () => {
+      showPage("recommended");
+      renderRecommended();
+    });
+
+  } catch (error) {
+    $("atsResult").textContent = error.message;
+  }
+});
     // Save resume skills for job recommendations
     const resumeSkills = [...new Set([...matched, ...detected])];
 
@@ -852,6 +889,58 @@ $("atsForm").addEventListener("submit", async event => {
   }
 });
 
+  /* LIVE RESUME-BASED JOB RECOMMENDATIONS */
+
+async function renderRecommended() {
+  const container = $("recommendedJobs");
+
+  container.innerHTML = "<p>Fetching live jobs and matching your resume...</p>";
+
+  try {
+    const formData = new FormData();
+    formData.append("token", authToken);
+    formData.append("title", "SOC Analyst");
+    formData.append("location", "India");
+    formData.append("page", "1");
+
+    const data = await api("/api/jobs/match", {
+      method: "POST",
+      body: formData
+    });
+
+    const jobs = data.jobs || [];
+
+    if (!jobs.length) {
+      container.innerHTML = "<p>No matching live jobs found. Try again later.</p>";
+      return;
+    }
+
+    container.innerHTML = jobs.map(job => `
+      <div class="card" style="margin:15px 0">
+        <h3>${escapeHTML(job.role)}</h3>
+        <p><b>Company:</b> ${escapeHTML(job.company)}</p>
+        <p><b>Location:</b> ${escapeHTML(job.location)}</p>
+        <h3>Resume Match: ${Number(job.match_score || 0)}%</h3>
+        <p><b>Matched Skills:</b>
+          ${escapeHTML((job.matched_skills || []).join(", ") || "Not identified")}
+        </p>
+        <p><b>Missing Skills:</b>
+          ${escapeHTML((job.missing_skills || []).join(", ") || "None")}
+        </p>
+        ${
+          job.url
+            ? `<a class="btn" href="${escapeHTML(job.url)}" target="_blank" rel="noopener noreferrer">Apply Now</a>`
+            : "<p>Application link unavailable.</p>"
+        }
+        <p><small>Source: Adzuna</small></p>
+      </div>
+    `).join("");
+
+  } catch (error) {
+    container.textContent = "Job recommendation error: " + error.message;
+  }
+}
+  
 /* ADMIN DASHBOARD */
 async function setAccountStatus(id, status) {
   if (!confirm(`Are you sure you want to ${status} this account?`)) {
